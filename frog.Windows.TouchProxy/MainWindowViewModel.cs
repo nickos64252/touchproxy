@@ -263,7 +263,115 @@ namespace frog.Windows.TouchProxy
 														});
 												}
 												break;
-										case "Port":
+                                        case "Use2DCursor":
+                                            bool use2DCursor;
+                                            if (Boolean.TryParse(value.Value, out use2DCursor))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use2DCursor = use2DCursor;
+                                                });
+                                            }
+                                            break;
+                                        case "Use2DObject":
+                                            bool use2DObject;
+                                            if (Boolean.TryParse(value.Value, out use2DObject))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use2DObject = use2DObject;
+                                                });
+                                            }
+                                            break;
+                                        case "Use2DBlob":
+                                            bool use2DBlob;
+                                            if (Boolean.TryParse(value.Value, out use2DBlob))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use2DBlob = use2DBlob;
+                                                });
+                                            }
+                                            break;
+                                        case "Use25DCursor":
+                                            bool use25DCursor;
+                                            if (Boolean.TryParse(value.Value, out use25DCursor))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use25DCursor = use25DCursor;
+                                                });
+                                            }
+                                            break;
+                                        case "Use25DObject":
+                                            bool use25DObject;
+                                            if (Boolean.TryParse(value.Value, out use25DObject))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use25DObject = use25DObject;
+                                                });
+                                            }
+                                            break;
+                                        case "Use25DBlob":
+                                            bool use25DBlob;
+                                            if (Boolean.TryParse(value.Value, out use25DBlob))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use25DBlob = use25DBlob;
+                                                });
+                                            }
+                                            break;
+                                        case "Use3DCursor":
+                                            bool use3DCursor;
+                                            if (Boolean.TryParse(value.Value, out use3DCursor))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use3DCursor = use3DCursor;
+                                                });
+                                            }
+                                            break;
+                                        case "Use3DObject":
+                                            bool use3DObject;
+                                            if (Boolean.TryParse(value.Value, out use3DObject))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use3DObject = use3DObject;
+                                                });
+                                            }
+                                            break;
+                                        case "Use3DBlob":
+                                            bool use3DBlob;
+                                            if (Boolean.TryParse(value.Value, out use3DBlob))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use3DBlob = use3DBlob;
+                                                });
+                                            }
+                                            break;
+                                        case "Port":
 											int port;
 											if (Int32.TryParse(value.Value, out port))
 											{
@@ -372,7 +480,16 @@ namespace frog.Windows.TouchProxy
 				(
 					"settings",
 					new XElement("setting", new XAttribute("key", "IsEnabled"), new XAttribute("value", this.TouchInjectionService.IsEnabled)),
-					new XElement("setting", new XAttribute("key", "Port"), new XAttribute("value", this.TouchInjectionService.Port)),
+                    new XElement("setting", new XAttribute("key", "Use2DCursor"), new XAttribute("value", this.TouchInjectionService.Use2DCursor)),
+                    new XElement("setting", new XAttribute("key", "Use2DObject"), new XAttribute("value", this.TouchInjectionService.Use2DObject)),
+                    new XElement("setting", new XAttribute("key", "Use2DBlob"), new XAttribute("value", this.TouchInjectionService.Use2DBlob)),
+                    new XElement("setting", new XAttribute("key", "Use25DCursor"), new XAttribute("value", this.TouchInjectionService.Use25DCursor)),
+                    new XElement("setting", new XAttribute("key", "Use25DObject"), new XAttribute("value", this.TouchInjectionService.Use25DObject)),
+                    new XElement("setting", new XAttribute("key", "Use25DBlob"), new XAttribute("value", this.TouchInjectionService.Use25DBlob)),
+                    new XElement("setting", new XAttribute("key", "Use3DCursor"), new XAttribute("value", this.TouchInjectionService.Use3DCursor)),
+                    new XElement("setting", new XAttribute("key", "Use3DObject"), new XAttribute("value", this.TouchInjectionService.Use3DObject)),
+                    new XElement("setting", new XAttribute("key", "Use3DBlob"), new XAttribute("value", this.TouchInjectionService.Use3DBlob)),
+                    new XElement("setting", new XAttribute("key", "Port"), new XAttribute("value", this.TouchInjectionService.Port)),
 					new XElement("setting", new XAttribute("key", "SelectedScreenTarget"), new XAttribute("value", this.SelectedScreenTarget)),
 					new XElement("setting", new XAttribute("key", "IsContactEnabled"), new XAttribute("value", this.TouchInjectionService.IsContactEnabled)),
 					new XElement("setting", new XAttribute("key", "IsContactVisible"), new XAttribute("value", this.TouchInjectionService.IsContactVisible)),

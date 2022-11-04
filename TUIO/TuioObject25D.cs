@@ -24,13 +24,13 @@ namespace TUIO
 
     /**
      * <remarks>
-     * The TuioObject class encapsulates /tuio/2Dobj TUIO objects.
+     * The TuioObject class encapsulates /tuio/25Dobj TUIO objects.
      * </remarks>
      *
-     * @author Martin Kaltenbrunner
-     * @version 1.1.6
+     * @author Nicolas Bremard
+     * @version 1.1.7
      */
-    public class TuioObject : TuioContainer
+    public class TuioObject25D : TuioContainer
     {
         /**
          * <summary>
@@ -70,17 +70,18 @@ namespace TUIO
         /**
          * <summary>
          * This constructor takes a TuioTime argument and assigns it along with the provided
-         * Session ID, Symbol ID, X and Y coordinate and angle to the newly created TuioObject.</summary>
+         * Session ID, Symbol ID, X and Y coordinate and angle to the newly created TuioObject25D.</summary>
          *
          * <param name="ttime">the TuioTime to assign</param>
          * <param name="si">the Session ID to assign</param>
          * <param name="sym">the Symbol ID to assign</param>
          * <param name="xp">the X coordinate to assign</param>
          * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
          * <param name="a">the angle to assign</param>
          */
-        public TuioObject(TuioTime ttime, long si, int sym, float xp, float yp, float a)
-            : base(ttime, si, xp, yp,0)
+        public TuioObject25D(TuioTime ttime, long si, int sym, float xp, float yp, float zp, float a)
+            : base(ttime, si, xp, yp,zp)
         {
             symbol_id = sym;
             angle = a;
@@ -91,16 +92,17 @@ namespace TUIO
         /**
          * <summary>
          * This constructor takes the provided Session ID, Symbol ID, X and Y coordinate
-         * and angle, and assigs these values to the newly created TuioObject.</summary>
+         * and angle, and assigs these values to the newly created TuioObject25D.</summary>
          *
          * <param name="si">the Session ID to assign</param>
          * <param name="sym">the Symbol ID to assign</param>
          * <param name="xp">the X coordinate to assign</param>
          * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
          * <param name="a">the angle to assign</param>
          */
-        public TuioObject(long si, int sym, float xp, float yp, float a)
-            : base(si, xp, yp, 0)
+        public TuioObject25D(long si, int sym, float xp, float yp, float zp, float a)
+            : base(si, xp, yp, zp)
         {
             symbol_id = sym;
             angle = a;
@@ -110,12 +112,12 @@ namespace TUIO
 
         /**
          * <summary>
-         * This constructor takes the atttibutes of the provided TuioObject
-         * and assigs these values to the newly created TuioObject.</summary>
+         * This constructor takes the atttibutes of the provided TuioObject25D
+         * and assigs these values to the newly created TuioObject25D.</summary>
          *
-         * <param name="tobj">the TuioObject to assign</param>
+         * <param name="tobj">the TuioObject25D to assign</param>
          */
-        public TuioObject(TuioObject tobj)
+        public TuioObject25D(TuioObject25D tobj)
             : base(tobj)
         {
             symbol_id = tobj.SymbolID;
@@ -131,21 +133,23 @@ namespace TUIO
          * <summary>
          * Takes a TuioTime argument and assigns it along with the provided
          * X and Y coordinate, angle, X and Y velocity, motion acceleration,
-         * rotation speed and rotation acceleration to the private TuioObject attributes.</summary>
+         * rotation speed and rotation acceleration to the private TuioObject25D attributes.</summary>
          *
          * <param name="ttime">the TuioTime to assign</param>
          * <param name="xp">the X coordinate to assign</param>
          * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
          * <param name="a">the angle coordinate to assign</param>
          * <param name="xs">the X velocity to assign</param>
          * <param name="ys">the Y velocity to assign</param>
+         * <param name="zs">the Z velocity to assign</param>
          * <param name="rs">the rotation velocity to assign</param>
          * <param name="ma">the motion acceleration to assign</param>
          * <param name="ra">the rotation acceleration to assign</param>
          */
-        public void update(TuioTime ttime, float xp, float yp, float a, float xs, float ys, float rs, float ma, float ra)
+        public void update(TuioTime ttime, float xp, float yp, float zp, float a, float xs, float ys, float zs, float rs, float ma, float ra)
         {
-            base.update(ttime, xp, yp,0, xs, ys,0, ma);
+            base.update(ttime, xp, yp,zp, xs, ys,zs, ma);
             angle = a;
             rotation_speed = rs;
             rotation_accel = ra;
@@ -160,16 +164,18 @@ namespace TUIO
          *
          * <param name="xp">the X coordinate to assign</param>
          * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
          * <param name="a">the angle coordinate to assign</param>
          * <param name="xs">the X velocity to assign</param>
          * <param name="ys">the Y velocity to assign</param>
+         * <param name="zs">the Z velocity to assign</param>
          * <param name="rs">the rotation velocity to assign</param>
          * <param name="ma">the motion acceleration to assign</param>
          * <param name="ra">the rotation acceleration to assign</param>
          */
-        public void update(float xp, float yp, float a, float xs, float ys, float rs, float ma, float ra)
+        public void update(float xp, float yp, float zp, float a, float xs, float ys, float zs, float rs, float ma, float ra)
         {
-            base.update(xp, yp, 0, xs, ys, 0, ma);
+            base.update(xp, yp, zp, xs, ys, zs, ma);
             angle = a;
             rotation_speed = rs;
             rotation_accel = ra;
@@ -179,18 +185,19 @@ namespace TUIO
         /**
          * <summary>
          * Takes a TuioTime argument and assigns it along with the provided
-         * X and Y coordinate and angle to the private TuioObject attributes.
+         * X and Y coordinate and angle to the private TuioObject25D attributes.
          * The speed and accleration values are calculated accordingly.</summary>
          *
          * <param name="ttime">the TuioTime to assign</param>
          * <param name="xp">the X coordinate to assign</param>
          * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
          * <param name="a">the angle coordinate to assign</param>
          */
-        public new void update(TuioTime ttime, float xp, float yp, float a)
+        public void update(TuioTime ttime, float xp, float yp, float zp, float a)
         {
 			TuioPoint lastPoint = path.Last.Value;
-            base.update(ttime, xp, yp, 0);
+            base.update(ttime, xp, yp, zp);
 
             TuioTime diffTime = currentTime - lastPoint.TuioTime;
             float dt = diffTime.TotalMilliseconds / 1000.0f;
@@ -209,13 +216,13 @@ namespace TUIO
 
         /**
          * <summary>
-         * Takes the atttibutes of the provided TuioObject
-         * and assigs these values to this TuioObject.
+         * Takes the atttibutes of the provided TuioObject25D
+         * and assigs these values to this TuioObject25D.
          * The TuioTime time stamp of this TuioContainer remains unchanged.</summary>
          *
          * <param name="tobj">the TuioContainer to assign</param>
          */
-        public void update(TuioObject tobj)
+        public void update(TuioObject25D tobj)
         {
             base.update(tobj);
             angle = tobj.Angle;
@@ -227,7 +234,7 @@ namespace TUIO
         /**
          * <summary>
          * This method is used to calculate the speed and acceleration values of a
-         * TuioObject with unchanged position and angle.</summary>
+         * TuioObject25D with unchanged position and angle.</summary>
          */
         public new void stop(TuioTime ttime)
         {
@@ -239,8 +246,8 @@ namespace TUIO
 
         /**
          * <summary>
-         * Returns the symbol ID of this TuioObject.</summary>
-         * <returns>the symbol ID of this TuioObject</returns>
+         * Returns the symbol ID of this TuioObject25D.</summary>
+         * <returns>the symbol ID of this TuioObject25D</returns>
          */
         public int SymbolID
         {
@@ -255,8 +262,8 @@ namespace TUIO
 		
         /**
          * <summary>
-         * Returns the rotation angle of this TuioObject.</summary>
-         * <returns>the rotation angle of this TuioObject</returns>
+         * Returns the rotation angle of this TuioObject25D.</summary>
+         * <returns>the rotation angle of this TuioObject25D</returns>
          */
         public float Angle
         {
@@ -271,8 +278,8 @@ namespace TUIO
 		
         /**
          * <summary>
-         * Returns the rotation angle in degrees of this TuioObject.</summary>
-         * <returns>the rotation angle in degrees of this TuioObject</returns>
+         * Returns the rotation angle in degrees of this TuioObject25D.</summary>
+         * <returns>the rotation angle in degrees of this TuioObject25D</returns>
          */
         public float AngleDegrees
         {
@@ -287,8 +294,8 @@ namespace TUIO
 		
         /**
          * <summary>
-         * Returns the rotation speed of this TuioObject.</summary>
-         * <returns>the rotation speed of this TuioObject</returns>
+         * Returns the rotation speed of this TuioObject25D.</summary>
+         * <returns>the rotation speed of this TuioObject25D</returns>
          */
         public float RotationSpeed
         {
@@ -303,8 +310,8 @@ namespace TUIO
 		
         /**
          * <summary>
-         * Returns the rotation acceleration of this TuioObject.</summary>
-         * <returns>the rotation acceleration of this TuioObject</returns>
+         * Returns the rotation acceleration of this TuioObject25D.</summary>
+         * <returns>the rotation acceleration of this TuioObject25D</returns>
          */
         public float RotationAccel
         {
@@ -319,8 +326,8 @@ namespace TUIO
 		
         /**
          * <summary>
-         * Returns true of this TuioObject is moving.</summary>
-         * <returns>true of this TuioObject is moving</returns>
+         * Returns true of this TuioObject25D is moving.</summary>
+         * <returns>true of this TuioObject25D is moving</returns>
          */
         public override bool isMoving
         {

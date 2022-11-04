@@ -1,22 +1,19 @@
 /*
-	TUIO C# Library - part of the reacTIVision project
-	http://reactivision.sourceforge.net/
+ TUIO C# Library - part of the reacTIVision project
+ Copyright (c) 2005-2016 Martin Kaltenbrunner <martin@tuio.org>
 
-	Copyright (c) 2005-2009 Martin Kaltenbrunner <mkalten@iua.upf.edu>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 3.0 of the License, or (at your option) any later version.
+ 
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library.
 */
 
 using System;
@@ -25,309 +22,498 @@ using System.Collections.Generic;
 namespace TUIO
 {
 
-/**
- * The abstract TuioContainer class defines common attributes that apply to both subclasses {@link TuioObject} and {@link TuioCursor}.
- *
- * @author Martin Kaltenbrunner
- * @version 1.4
- */
-public abstract class TuioContainer:TuioPoint {
+    /**
+     * <remarks>The abstract TuioContainer class defines common attributes that apply 
+     * to both subclasses (TuioObject and TuioCursor).</remarks>
+     * <seealso cref="TuioObject"/>
+     * <seealso cref="TuioCursor"/>
+     *
+     * @author Martin Kaltenbrunner
+     * @version 1.1.6
+     */
+    public abstract class TuioContainer : TuioPoint
+    {
 
-	/**
-	 * The unique session ID number that is assigned to each TUIO object or cursor.
-	 */
-	protected long session_id;
-	/**
-	 * The X-axis velocity value.
-	 */
-	protected float x_speed;
-	/**
-	 * The Y-axis velocity value.
-	 */
-	protected float y_speed;
-	/**
-	 * The motion speed value.
-	 */
-	protected float motion_speed;
-	/**
-	 * The motion acceleration value.
-	 */
-	protected float motion_accel;
-	/**
-	 * A Vector of TuioPoints containing all the previous positions of the TUIO component.
-	 */
-	protected List<TuioPoint> path;
-	/**
-	 * Defines the ADDED state.
-	 */
-	public const int TUIO_ADDED = 0;
-	/**
-	 * Defines the ACCELERATING state.
-	 */
-	public const int TUIO_ACCELERATING = 1;
-	/**
-	 * Defines the DECELERATING state.
-	 */
-	public const int TUIO_DECELERATING = 2;
-	/**
-	 * Defines the STOPPED state.
-	 */
-	public const int TUIO_STOPPED = 3;
-	/**
-	 * Defines the REMOVED state.
-	 */
-	public const int TUIO_REMOVED = 4;
-	/**
-	 * Reflects the current state of the TuioComponent
-	 */
-	protected int state;
+        /**
+         * <summary>
+         * The unique session ID number that is assigned to each TUIO object or cursor.</summary>
+         */
+        protected long session_id;
+        /**
+         * <summary>
+         * The X-axis velocity value.</summary>
+         */
+        protected float x_speed;
+        /**
+         * <summary>
+         * The Y-axis velocity value.</summary>
+         */
+        protected float y_speed;
+        /**
+         * <summary>
+         * The Z-axis velocity value.</summary>
+         */
+        protected float z_speed;
+        /**
+         * <summary>
+         * The motion speed value.</summary>
+         */
+        protected float motion_speed;
+        /**
+         * <summary>
+         * The motion acceleration value.</summary>
+         */
+        protected float motion_accel;
+        /**
+         * <summary>
+         * A LinkedList of TuioPoints containing all the previous positions of the TUIO component.</summary>
+         */
+        protected LinkedList<TuioPoint> path;
 
-	/**
-	 * This constructor takes a TuioTime argument and assigns it along with the provided
-	 * Session ID, X and Y coordinate to the newly created TuioContainer.
-	 *
-	 * @param	ttime	the TuioTime to assign
-	 * @param	si	the Session ID to assign
-	 * @param	xp	the X coordinate to assign
-	 * @param	yp	the Y coordinate to assign
-	 */
-	public TuioContainer(TuioTime ttime, long si, float xp, float yp):base(ttime,xp,yp) {
-		session_id = si;
-		x_speed = 0.0f;
-		y_speed = 0.0f;
-		motion_speed = 0.0f;
-		motion_accel = 0.0f;
+        #region State Enumeration Values
+        /**
+         * <summary>
+         * Defines the REMOVED state.</summary>
+         */
+        public const int TUIO_IDLE = 0;
+        /**
+         * <summary>
+         * Defines the ADDED state.</summary>
+         */
+        public const int TUIO_ADDED = 1;
+        /**
+         * <summary>
+         * Defines the ACCELERATING state.</summary>
+         */
+        public const int TUIO_ACCELERATING = 2;
+        /**
+         * <summary>
+         * Defines the DECELERATING state.</summary>
+         */
+        public const int TUIO_DECELERATING = 3;
 
-		path = new List<TuioPoint>();
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		state = TUIO_ADDED;
-	}
+        /**
+         * <summary>
+         * Defines the STOPPED state.</summary>
+         */
+        public const int TUIO_STOPPED = 5;
+        /**
+         * <summary>
+         * Defines the REMOVED state.</summary>
+         */
+        public const int TUIO_REMOVED = 6;
 
-	/**
-	 * This constructor takes the provided Session ID, X and Y coordinate
-	 * and assigs these values to the newly created TuioContainer.
-	 *
-	 * @param	si	the Session ID to assign
-	 * @param	xp	the X coordinate to assign
-	 * @param	yp	the Y coordinate to assign
-	 */
-	public TuioContainer (long si, float xp, float yp):base(xp,yp) {
-		session_id = si;
-		x_speed = 0.0f;
-		y_speed = 0.0f;
-		motion_speed = 0.0f;
-		motion_accel = 0.0f;
-		path = new List<TuioPoint>();
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		state = TUIO_ADDED;
-	}
+        #endregion
+        /**
+         * <summary>
+         * Reflects the current state of the TuioComponent</summary>
+         */
+        protected int state;
 
-	/**
-	 * This constructor takes the atttibutes of the provided TuioContainer
-	 * and assigs these values to the newly created TuioContainer.
-	 *
-	 * @param	tcon	the TuioContainer to assign
-	 */
-	public TuioContainer (TuioContainer tcon):base(tcon) {
-		session_id = tcon.getSessionID();
-		x_speed = 0.0f;
-		y_speed = 0.0f;
-		motion_speed = 0.0f;
-		motion_accel = 0.0f;
-		path = new List<TuioPoint>();
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		state = TUIO_ADDED;
-	}
+        #region Constructors
 
-	/**
-	 * Takes a TuioTime argument and assigns it along with the provided
-	 * X and Y coordinate to the private TuioContainer attributes.
-	 * The speed and accleration values are calculated accordingly.
-	 *
-	 * @param	ttime	the TuioTime to assign
-	 * @param	xp	the X coordinate to assign
-	 * @param	yp	the Y coordinate to assign
-	 */
-	public new void update(TuioTime ttime, float xp, float yp) {
-		TuioPoint lastPoint = path[path.Count-1];
-		base.update(ttime,xp,yp);
+        /**
+         * <summary>
+         * This constructor takes a TuioTime argument and assigns it along with the provided
+         * Session ID, X and Y coordinate to the newly created TuioContainer.</summary>
+         * 
+         * <param name="ttime">the TuioTime to assign</param>
+         * <param name="si">the Session ID to assign</param>
+         * <param name="xp">the X coordinate to assign</param>
+         * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
+         */
+        public TuioContainer(TuioTime ttime, long si, float xp, float yp, float zp)
+            : base(ttime, xp, yp,zp)
+        {
+            session_id = si;
+            x_speed = 0.0f;
+            y_speed = 0.0f;
+            z_speed = 0.0f;
+            motion_speed = 0.0f;
+            motion_accel = 0.0f;
 
-		TuioTime diffTime = currentTime - lastPoint.getTuioTime();
-		float dt = diffTime.getTotalMilliseconds()/1000.0f;
-		float dx = this.xpos - lastPoint.getX();
-		float dy = this.ypos - lastPoint.getY();
-		float dist = (float)Math.Sqrt(dx*dx+dy*dy);
-		float last_motion_speed = this.motion_speed;
+            path = new LinkedList<TuioPoint>();
+            path.AddLast(new TuioPoint(currentTime, xpos, ypos,zpos));
+            state = TUIO_ADDED;
+        }
 
-		this.x_speed = dx/dt;
-		this.y_speed = dy/dt;
-		this.motion_speed = dist/dt;
-		this.motion_accel = (motion_speed - last_motion_speed)/dt;
+        /**
+         * <summary>
+         * This constructor takes the provided Session ID, X and Y coordinate
+         * and assigs these values to the newly created TuioContainer.</summary>
+         * 
+         * <param name="si">the Session ID to assign</param>
+         * <param name="xp">the X coordinate to assign</param>
+         * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
+         */
+        public TuioContainer(long si, float xp, float yp, float zp)
+            : base(xp, yp, zp)
+        {
+            session_id = si;
+            x_speed = 0.0f;
+            y_speed = 0.0f;
+            z_speed = 0.0f;
+            motion_speed = 0.0f;
+            motion_accel = 0.0f;
+            path = new LinkedList<TuioPoint>();
+            path.AddLast(new TuioPoint(currentTime, xpos, ypos,zpos));
+            state = TUIO_ADDED;
+        }
 
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		if (motion_accel>0) state = TUIO_ACCELERATING;
-		else if (motion_accel<0) state = TUIO_DECELERATING;
-		else state = TUIO_STOPPED;
-	}
+        /**
+         * <summary>
+         * This constructor takes the atttibutes of the provided TuioContainer
+         * and assigs these values to the newly created TuioContainer.</summary>
+         * 
+         * <param name="tcon">the TuioContainer to assign</param>
+         */
+        public TuioContainer(TuioContainer tcon)
+            : base(tcon)
+        {
+            session_id = tcon.SessionID;
+            x_speed = 0.0f;
+            y_speed = 0.0f;
+            motion_speed = 0.0f;
+            motion_accel = 0.0f;
+            path = new LinkedList<TuioPoint>();
+            path.AddLast(new TuioPoint(currentTime, xpos, ypos,zpos));
+            state = TUIO_ADDED;
+        }
+        #endregion
 
-	/**
-	 * This method is used to calculate the speed and acceleration values of
-	 * TuioContainers with unchanged positions.
-	 */
-	public void stop(TuioTime ttime) {
-		update(ttime,this.xpos,this.ypos);
-	}
+        #region Update Methods
 
-	/**
-	 * Takes a TuioTime argument and assigns it along with the provided
-	 * X and Y coordinate, X and Y velocity and acceleration
-	 * to the private TuioContainer attributes.
-	 *
-	 * @param	ttime	the TuioTime to assign
-	 * @param	xp	the X coordinate to assign
-	 * @param	yp	the Y coordinate to assign
-	 * @param	xs	the X velocity to assign
-	 * @param	ys	the Y velocity to assign
-	 * @param	ma	the acceleration to assign
-	 */
-	public void update(TuioTime ttime, float xp,float yp,float xs,float ys,float ma) {
-		base.update(ttime,xp,yp);
-		x_speed = xs;
-		y_speed = ys;
-		motion_speed = (float)Math.Sqrt(x_speed*x_speed+y_speed*y_speed);
-		motion_accel = ma;
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		if (motion_accel>0) state = TUIO_ACCELERATING;
-		else if (motion_accel<0) state = TUIO_DECELERATING;
-		else state = TUIO_STOPPED;
-	}
+        /**
+         * <summary>
+	     * Takes a TuioTime argument and assigns it along with the provided
+	     * X and Y coordinate to the private TuioContainer attributes.
+	     * The speed and accleration values are calculated accordingly.</summary>
+	     * <param name="ttime">the TuioTime to assign</param>
+	     * <param name="xp">the X coordinate to assign</param>
+	     * <param name="yp">the Y coordinate to assign</param>
+	     * <param name="zp">the Z coordinate to assign</param>
+	     */
+        public new void update(TuioTime ttime, float xp, float yp, float zp)
+        {
+            TuioPoint lastPoint = path.Last.Value;
+            base.update(ttime, xp, yp, zp);
 
-	/**
-	 * Assigns the provided X and Y coordinate, X and Y velocity and acceleration
-	 * to the private TuioContainer attributes. The TuioTime time stamp remains unchanged.
-	 *
-	 * @param	xp	the X coordinate to assign
-	 * @param	yp	the Y coordinate to assign
-	 * @param	xs	the X velocity to assign
-	 * @param	ys	the Y velocity to assign
-	 * @param	ma	the acceleration to assign
-	 */
-	public void update (float xp,float yp,float xs,float ys,float ma) {
-		base.update(xp,yp);
+            TuioTime diffTime = currentTime - lastPoint.TuioTime;
+            float dt = diffTime.TotalMilliseconds / 1000.0f;
+            float dx = this.xpos - lastPoint.X;
+            float dy = this.ypos - lastPoint.Y;
+            float dz = this.zpos - lastPoint.Z;
+            float dist = (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            float last_motion_speed = this.motion_speed;
 
-		x_speed = xs;
-		y_speed = ys;
-		motion_speed = (float)Math.Sqrt(x_speed*x_speed+y_speed*y_speed);
-		motion_accel = ma;
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		if (motion_accel>0) state = TUIO_ACCELERATING;
-		else if (motion_accel<0) state = TUIO_DECELERATING;
-		else state = TUIO_STOPPED;
-	}
+            this.x_speed = dx / dt;
+            this.y_speed = dy / dt;
+            this.z_speed = dz / dt;
+            this.motion_speed = dist / dt;
+            this.motion_accel = (motion_speed - last_motion_speed) / dt;
 
-	/**
-	 * Takes the atttibutes of the provided TuioContainer
-	 * and assigs these values to this TuioContainer.
-	 * The TuioTime time stamp of this TuioContainer remains unchanged.
-	 *
-	 * @param	tcon	the TuioContainer to assign
-	 */
-	public void update (TuioContainer tcon) {
-		base.update(tcon.getX(),tcon.getY());
+            if (motion_accel > 0) state = TUIO_ACCELERATING;
+            else if (motion_accel < 0) state = TUIO_DECELERATING;
+            else state = TUIO_STOPPED;
 
-		x_speed = tcon.getXSpeed();
-		y_speed = tcon.getYSpeed();
-		motion_speed = (float)Math.Sqrt(x_speed*x_speed+y_speed*y_speed);
-		motion_accel = tcon.getMotionAccel();
-		path.Add(new TuioPoint(currentTime,xpos,ypos));
-		if (motion_accel>0) state = TUIO_ACCELERATING;
-		else if (motion_accel<0) state = TUIO_DECELERATING;
-		else state = TUIO_STOPPED;
-	}
+			lock (path) {
+				path.AddLast (new TuioPoint (currentTime, xpos, ypos,zpos));
+				if (path.Count > 128) path.RemoveFirst ();
+			}
+        }
 
-	/**
-	 * Assigns the REMOVE state to this TuioContainer and sets
-	 * its TuioTime time stamp to the provided TuioTime argument.
-	 *
-	 * @param	ttime	the TuioTime to assign
-	 */
-	public void remove(TuioTime ttime) {
-			currentTime = ttime;
-			state = TUIO_REMOVED;
-	}
+        /**
+         * <summary>
+         * This method is used to calculate the speed and acceleration values of
+         * TuioContainers with unchanged positions.</summary>
+         */
+        public void stop(TuioTime ttime)
+        {
+            update(ttime, this.xpos, this.ypos, this.zpos);
+        }
 
-	/**
-	 * Returns the Session ID of this TuioContainer.
-	 * @return	the Session ID of this TuioContainer
-	 */
-	public long getSessionID() {
-		return session_id;
-	}
+        /**
+         * <summary>
+         * Takes a TuioTime argument and assigns it along with the provided
+         * X and Y coordinate, X and Y velocity and acceleration
+         * to the private TuioContainer attributes.</summary>
+         *
+         * <param name="ttime">the TuioTime to assign</param>
+         * <param name="xp">the X coordinate to assign</param>
+         * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Y coordinate to assign</param>
+         * <param name="xs">the X velocity to assign</param>
+         * <param name="ys">the Y velocity to assign</param>
+         * <param name="zs">the Y velocity to assign</param>
+         * <param name="ma">the acceleration to assign</param>
+         */
+        public void update(TuioTime ttime, float xp, float yp, float zp, float xs, float ys, float zs, float ma)
+        {
+            base.update(ttime, xp, yp,zp);
+            x_speed = xs;
+            y_speed = ys;
+            z_speed = zs;
+            motion_speed = (float)Math.Sqrt(x_speed * x_speed + y_speed * y_speed + z_speed * z_speed);
+            motion_accel = ma;
+           
+            if (motion_accel > 0) state = TUIO_ACCELERATING;
+            else if (motion_accel < 0) state = TUIO_DECELERATING;
+            else state = TUIO_STOPPED;
 
-	/**
-	 * Returns the X velocity of this TuioContainer.
-	 * @return	the X velocity of this TuioContainer
-	 */
-	public float getXSpeed() {
-		return x_speed;
-	}
+			lock (path) {
+				path.AddLast (new TuioPoint (currentTime, xpos, ypos,zpos));
+				if (path.Count > 128) path.RemoveFirst ();
+			}
+        }
 
-	/**
-	 * Returns the Y velocity of this TuioContainer.
-	 * @return	the Y velocity of this TuioContainer
-	 */
-	public float getYSpeed() {
-		return y_speed;
-	}
+        /**
+         * <summary>
+         * Assigns the provided X and Y coordinate, X and Y velocity and acceleration
+         * to the private TuioContainer attributes. The TuioTime time stamp remains unchanged.</summary>
+         *
+         * <param name="xp">the X coordinate to assign</param>
+         * <param name="yp">the Y coordinate to assign</param>
+         * <param name="zp">the Z coordinate to assign</param>
+         * <param name="xs">the X velocity to assign</param>
+         * <param name="ys">the Y velocity to assign</param>
+         * <param name="zs">the Z velocity to assign</param>
+         * <param name="ma">the acceleration to assign</param>
+         */
+        public void update(float xp, float yp, float zp, float xs, float ys, float zs, float ma)
+        {
+            base.update(xp, yp,zp);
 
-	/**
-	 * Returns the position of this TuioContainer.
-	 * @return	the position of this TuioContainer
-	 */
-	public TuioPoint getPosition() {
-		return new TuioPoint(xpos,ypos);
-	}
+            x_speed = xs;
+            y_speed = ys;
+            z_speed = zs;
+            motion_speed = (float)Math.Sqrt(x_speed * x_speed + y_speed * y_speed + z_speed * z_speed);
+            motion_accel = ma;
+            
+            if (motion_accel > 0) state = TUIO_ACCELERATING;
+            else if (motion_accel < 0) state = TUIO_DECELERATING;
+            else state = TUIO_STOPPED;
 
-	/**
-	 * Returns the path of this TuioContainer.
-	 * @return	the path of this TuioContainer
-	 */
-	public List<TuioPoint> getPath() {
-		return path;
-	}
+			lock (path) {
+				path.AddLast (new TuioPoint (currentTime, xpos, ypos,zpos));
+				if (path.Count > 128) path.RemoveFirst ();
+			}
+		}
 
-	/**
-	 * Returns the motion speed of this TuioContainer.
-	 * @return	the motion speed of this TuioContainer
-	 */
-	public float getMotionSpeed() {
-		return motion_speed;
-	}
+        /**
+         * <summary>
+         * Takes the atttibutes of the provided TuioContainer
+         * and assigs these values to this TuioContainer.
+         * The TuioTime time stamp of this TuioContainer remains unchanged.</summary>
+         *
+         * <param name="tcon">the TuioContainer to assign</param>
+         */
+        public void update(TuioContainer tcon)
+        {
+            base.update(tcon.X, tcon.Y, tcon.Z);
 
-	/**
-	 * Returns the motion acceleration of this TuioContainer.
-	 * @return	the motion acceleration of this TuioContainer
-	 */
-	public float getMotionAccel() {
-		return motion_accel;
-	}
+            x_speed = tcon.XSpeed;
+            y_speed = tcon.YSpeed;
+            z_speed = tcon.ZSpeed;
+            motion_speed = tcon.MotionSpeed;
+            motion_accel = tcon.MotionAccel;
+            
+            state = tcon.state;
 
-	/**
-	 * Returns the TUIO state of this TuioContainer.
-	 * @return	the TUIO state of this TuioContainer
-	 */
-	public int getTuioState() {
-		return state;
-	}
+			lock (path) {
+				path.AddLast (new TuioPoint (currentTime, xpos, ypos,zpos));
+				if (path.Count > 128) path.RemoveFirst ();
+			}
+        }
+        #endregion
 
-	/**
-	 * Returns true of this TuioContainer is moving.
-	 * @return	true of this TuioContainer is moving
-	 */
-	public bool isMoving() {
-		if ((state==TUIO_ACCELERATING) || (state==TUIO_DECELERATING)) return true;
-		else return false;
-	}
+        /**
+        * <summary>
+        * Assigns the REMOVE state to this TuioContainer and sets
+        * its TuioTime time stamp to the provided TuioTime argument.</summary>
+        *
+        * <param name="ttime">the TuioTime to assign</param>
+        */
+        public void remove(TuioTime ttime)
+        {
+            currentTime = ttime;
+            state = TUIO_REMOVED;
+        }
 
-	}
+        #region Properties & Getter/Setter Methods
+
+        /**
+         * <summary>
+         * Returns the Session ID of this TuioContainer.</summary>
+         * <returns>the Session ID of this TuioContainer</returns>
+        */
+        public long SessionID
+        {
+            get { return session_id; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property SessionID instead is recommended.")]
+        public long getSessionID()
+        {
+            return SessionID;
+        }
+
+        /**
+         * <summary>
+         * Returns the X velocity of this TuioContainer.</summary>
+         * <returns>the X velocity of this TuioContainer</returns>
+         */
+        public float XSpeed
+        {
+            get { return x_speed; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property XSpeed instead is recommended.")]
+        public float getXSpeed()
+        {
+            return XSpeed;
+        }
+
+        /**
+         * <summary>
+         * Returns the Y velocity of this TuioContainer.</summary>
+         * <returns>the Y velocity of this TuioContainer</returns>
+         */
+        public float YSpeed
+        {
+            get { return y_speed; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property YSpeed instead is recommended.")]
+        public float getYSpeed()
+        {
+            return YSpeed;
+        }
+
+        /**
+         * <summary>
+         * Returns the Z velocity of this TuioContainer.</summary>
+         * <returns>the Z velocity of this TuioContainer</returns>
+         */
+        public float ZSpeed
+        {
+            get { return y_speed; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property ZSpeed instead is recommended.")]
+        public float getZSpeed()
+        {
+            return ZSpeed;
+        }
+
+        /**
+         * <summary>
+         * Returns the position of this TuioContainer.</summary>
+         * <returns>the position of this TuioContainer</returns>
+         */
+        public TuioPoint Position
+        {
+            get { return new TuioPoint(xpos, ypos,zpos); }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property Position instead is recommended.")]
+        public TuioPoint getPosition()
+        {
+            return Position;
+        }
+
+        /**
+         * <summary>
+         * Returns the path of this TuioContainer.</summary>
+         * <returns>the path of this TuioContainer</returns>
+         */
+        public List<TuioPoint> Path
+        {
+			get { 
+				List<TuioPoint> p;
+				lock (path) {
+					p = new List<TuioPoint> (path); 
+				}
+				return p;
+			}
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property Path instead is recommended.")]
+        public List<TuioPoint> getPath()
+        {
+            return Path;
+        }
+
+        /**
+         * <summary>
+         * Returns the motion speed of this TuioContainer.</summary>
+         * <returns>the motion speed of this TuioContainer</returns>
+         */
+        public float MotionSpeed
+        {
+            get { return motion_speed; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property MotionSpeed instead is recommended.")]
+        public float getMotionSpeed()
+        {
+            return MotionSpeed;
+        }
+
+        /**
+         * <summary>
+         * Returns the motion acceleration of this TuioContainer.</summary>
+         * <returns>the motion acceleration of this TuioContainer</returns>
+         */
+        public float MotionAccel
+        {
+            get { return motion_accel; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property MotionAccel instead is recommended.")]
+        public float getMotionAccel()
+        {
+            return MotionAccel;
+        }
+
+        /**
+         * <summary>
+         * Returns the TUIO state of this TuioContainer.</summary>
+         * <returns>the TUIO state of this TuioContainer</returns>
+         */
+        public int TuioState
+        {
+            get { return state; }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property TuioState instead is recommended.")]
+        public int getTuioState()
+        {
+            return TuioState;
+        }
+
+        /**
+         * <summary>
+         * Returns true of this TuioContainer is moving.</summary>
+         * <returns>true of this TuioContainer is moving</returns>
+         */
+        public virtual bool isMoving
+        {
+            get
+            {
+                if ((state == TUIO_ACCELERATING) || (state == TUIO_DECELERATING)) return true;
+                else return false;
+            }
+        }
+
+        [Obsolete("This method is provided only for compatability with legacy code. Use of the property isMoving instead is recommended.")]
+        public virtual bool getIsMoving()
+        {
+            return isMoving;
+        }
+
+        #endregion
+
+    }
 }
