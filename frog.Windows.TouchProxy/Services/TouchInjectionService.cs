@@ -868,7 +868,7 @@ namespace frog.Windows.TouchProxy.Services
             if (!_isTouchInjectionSuspended)
             {
                 // Clic where the touch is
-                KeyboardInjection.SendMouse(x,y,(value>_clickThreshold));
+                KeyboardInjection.SendMouse((value > _clickThreshold)? MouseEventFlags.MOUSEEVENTF_LEFTDOWN : MouseEventFlags.MOUSEEVENTF_LEFTUP,x,y,0);
             }
 
         }
@@ -899,9 +899,10 @@ namespace frog.Windows.TouchProxy.Services
 				_pointerTouchInfos.Clear();
 				InjectPointerTouchInfos();
 
-				KeyboardInjection.Send(KeyboardInputSequence.WindowsKeyPress);
+				KeyboardInjection.Send(VirtualKeyCode.LWIN,true);
+                KeyboardInjection.Send(VirtualKeyCode.LWIN, false);
 
-				await Task.Delay(TimeSpan.FromMilliseconds(750));
+                await Task.Delay(TimeSpan.FromMilliseconds(750));
 
 				_isTouchInjectionSuspended = false;
 
