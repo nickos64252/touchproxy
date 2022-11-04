@@ -310,11 +310,12 @@
                             <TranslateTransform X="-15" Y="-59" />
                         </TextBlock.RenderTransform>
                     </TextBlock>
-                    <Slider x:Name="sliderLeft" Value="{Binding Path=TouchInjectionService.CalibrationBufferLeft, Mode=TwoWay}" Width="40" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal" IsDirectionReversed="True">
-                        <Slider.RenderTransform>
+                    <TextBox x:Name="sliderLeft" Text="{Binding Path=TouchInjectionService.CalibrationBufferLeft, Mode=TwoWay}" Width="40" HorizontalAlignment="Left" VerticalAlignment="Top">
+                       <TextBox.RenderTransform>
                             <TranslateTransform X="-20" Y="-40" />
-                        </Slider.RenderTransform>
-                    </Slider>
+                        </TextBox.RenderTransform>
+                        
+                    </TextBox>
 
                     <!-- Top Calibration Control & Marker -->
                     <Rectangle Width="15" Height="1" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource markerRectangle}">
@@ -346,11 +347,11 @@
                             <TranslateTransform X="76" Y="-8" />
                         </TextBlock.RenderTransform>
                     </TextBlock>
-                    <Slider x:Name="sliderTop" Value="{Binding Path=TouchInjectionService.CalibrationBufferTop, Mode=TwoWay}" Height="40" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Vertical" IsDirectionReversed="False">
-                        <Slider.RenderTransform>
-                            <TranslateTransform X="40" Y="-20" />
-                        </Slider.RenderTransform>
-                    </Slider>
+                    <TextBox x:Name="sliderTop" Text="{Binding Path=TouchInjectionService.CalibrationBufferTop, Mode=TwoWay}" Width="40" HorizontalAlignment="Right" VerticalAlignment="Top" >
+                        <TextBox.RenderTransform>
+                            <TranslateTransform X="60" Y="-9" />
+                        </TextBox.RenderTransform>
+                    </TextBox>
 
                     <!-- Right Calibration Control & Marker -->
                     <Rectangle Width="1" Height="15" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource markerRectangle}">
@@ -382,11 +383,11 @@
                             <TranslateTransform X="15" Y="58" />
                         </TextBlock.RenderTransform>
                     </TextBlock>
-                    <Slider x:Name="sliderRight" Value="{Binding Path=TouchInjectionService.CalibrationBufferRight, Mode=TwoWay}" Width="40" HorizontalAlignment="Right" VerticalAlignment="Bottom" Orientation="Horizontal" IsDirectionReversed="False">
-                        <Slider.RenderTransform>
+                    <TextBox x:Name="sliderRight" Text="{Binding Path=TouchInjectionService.CalibrationBufferRight, Mode=TwoWay}" Width="40" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBox.RenderTransform>
                             <TranslateTransform X="19" Y="40" />
-                        </Slider.RenderTransform>
-                    </Slider>
+                        </TextBox.RenderTransform>
+                    </TextBox>
 
                     <!-- Bottom Calibration Control & Marker -->
                     <Rectangle Width="15" Height="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Style="{StaticResource markerRectangle}">
@@ -418,11 +419,11 @@
                             <TranslateTransform X="-76" Y="7" />
                         </TextBlock.RenderTransform>
                     </TextBlock>
-                    <Slider x:Name="sliderBottom" Value="{Binding Path=TouchInjectionService.CalibrationBufferBottom, Mode=TwoWay}" Height="40" HorizontalAlignment="Left" VerticalAlignment="Bottom" Orientation="Vertical" IsDirectionReversed="True">
-                        <Slider.RenderTransform>
-                            <TranslateTransform X="-40" Y="19" />
-                        </Slider.RenderTransform>
-                    </Slider>
+                    <TextBox x:Name="sliderBottom" Text="{Binding Path=TouchInjectionService.CalibrationBufferBottom, Mode=TwoWay}" Width="40" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                        <TextBox.RenderTransform>
+                            <TranslateTransform X="-60" Y="9" />
+                        </TextBox.RenderTransform>
+                    </TextBox>
 
                     <!-- Touch Marker Display -->
                     <ItemsControl ItemsSource="{Binding Path=TouchMarkers}" IsHitTestVisible="False" Margin="0,0,0,104">

@@ -24,7 +24,7 @@ namespace frog.Windows.TouchProxy.Services
 		private const uint TOUCH_ORIENTATION = 0;
 		private const uint TOUCH_PRESSURE = 1024;
 		private const int DEFAULT_WINDOWS_KEY_PRESS_TOUCH_COUNT = 5;
-		private const double CALIBRATION_BUFFER_MAXLENGTH = 30;
+		private const double CALIBRATION_BUFFER_MAXLENGTH = 999999;
 
 		private static volatile bool _isTouchInjectionSuspended = false;
 
