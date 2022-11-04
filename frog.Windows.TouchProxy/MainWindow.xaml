@@ -24,11 +24,12 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="37*" />
+            <RowDefinition Height="5*"/>
+            <RowDefinition Height="Auto" MinHeight="459" />
         </Grid.RowDefinitions>
 
-        <GroupBox Grid.Column="0" Grid.Row="0">
+        <GroupBox Grid.Column="0" Grid.Row="0" Margin="0,0,0,1" Grid.RowSpan="1">
             <GroupBox.Header>
                 <Label Content="CONFIGURATION" />
             </GroupBox.Header>
@@ -190,43 +191,67 @@
             </DockPanel>
         </GroupBox>
 
-        <GroupBox Grid.Column="0" Grid.Row="1" MinWidth="480" MinHeight="100" Margin="0,5,0,0" VerticalAlignment="Top" Height="68.96">
+        <GroupBox Grid.Column="0" MinWidth="480" MinHeight="140" VerticalAlignment="Top" Height="140" Grid.RowSpan="2" Margin="-1,0,1,0" Grid.Row="1" >
+            <GroupBox.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform Angle="0.295"/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </GroupBox.RenderTransform>
             <GroupBox.Header>
                 <Label Content="MAPPING" />
             </GroupBox.Header>
-            <Grid Width="480" Height="50">
-                <DockPanel>
+            <Grid Width="480" Height="120">
+                <StackPanel Orientation="Vertical">
+                    <DockPanel>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                        <StackPanel Orientation="Vertical" Margin="0,0,0,0">
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DCursor, Mode=TwoWay}" Content="Use 2DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DObject, Mode=TwoWay}" Content="Use 2DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DBlob, Mode=TwoWay}" Content="Use 2DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DCursor, Mode=TwoWay}" Content="Use 2DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DObject, Mode=TwoWay}" Content="Use 2DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DBlob, Mode=TwoWay}" Content="Use 2DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Vertical" Margin="20,0,0,0">
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DCursor, Mode=TwoWay}" Content="Use 25DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DObject, Mode=TwoWay}" Content="Use 25DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DBlob, Mode=TwoWay}" Content="Use 25DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Vertical" Margin="20,0,0,0">
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DCursor, Mode=TwoWay}" Content="Use 3DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DObject, Mode=TwoWay}" Content="Use 3DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DBlob, Mode=TwoWay}" Content="Use 3DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                            </StackPanel>
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" Margin="0,0,0,0">
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DCursor, Mode=TwoWay}" Content="Use 25DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DObject, Mode=TwoWay}" Content="Use 25DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DBlob, Mode=TwoWay}" Content="Use 25DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Vertical" Margin="0,0,0,0">
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DCursor, Mode=TwoWay}" Content="Use 3DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DObject, Mode=TwoWay}" Content="Use 3DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                            <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DBlob, Mode=TwoWay}" Content="Use 3DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                        </StackPanel>
-                    </StackPanel>
+
+                    </DockPanel>
+                    <DockPanel >
+
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <CheckBox x:Name="Click25D" IsChecked="{Binding Path=TouchInjectionService.Use25DasClick, Mode=TwoWay}" Content="Use 25D as Click" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="30,10,0,0" IsEnabled="{Binding ElementName=Click25D, Path=IsChecked}">
+                                <TextBlock Text="Click Threshold :" Width="85" VerticalAlignment="Top" />
+                                <TextBox  Text="{Binding Path=TouchInjectionService.ClickThreshold, Mode=TwoWay}" Width="100" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                            </StackPanel>
 
 
-                </DockPanel>
+
+
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
             </Grid>
 
         </GroupBox>
 
-        <GroupBox Grid.Column="0" Grid.Row="2" MinWidth="480" MinHeight="360" Margin="0,110,0,0" VerticalAlignment="Top" Height="400.96">
+        <GroupBox Grid.Column="0" Grid.Row="2" MinWidth="480" MinHeight="360" VerticalAlignment="Top" Height="360" Margin="0,110,0,0">
             <GroupBox.Header>
                 <Label Content="CALIBRATION" />
             </GroupBox.Header>
             <Grid Width="480" Margin="0,0,-12,-19">
-                <Grid Width="{Binding Path=CalibrationPanelSize.Width}" Height="{Binding Path=CalibrationPanelSize.Height}" Background="#FF000000" Margin="0,0,0,10">
+                <Grid Width="{Binding Path=CalibrationPanelSize.Width}" Height="{Binding Path=CalibrationPanelSize.Height}" Background="#FF000000" Margin="0,0,0,43">
                     <Grid.Resources>
                         <converters:CalibrationBufferMarkerTransformConverter x:Key="calibrationBufferMarkerTransformConverter" />
                         <Style TargetType="{x:Type Slider}">
@@ -311,10 +336,10 @@
                         </TextBlock.RenderTransform>
                     </TextBlock>
                     <TextBox x:Name="sliderLeft" Text="{Binding Path=TouchInjectionService.CalibrationBufferLeft, Mode=TwoWay}" Width="40" HorizontalAlignment="Left" VerticalAlignment="Top">
-                       <TextBox.RenderTransform>
+                        <TextBox.RenderTransform>
                             <TranslateTransform X="-20" Y="-40" />
                         </TextBox.RenderTransform>
-                        
+
                     </TextBox>
 
                     <!-- Top Calibration Control & Marker -->
@@ -449,7 +474,7 @@
             </Grid>
         </GroupBox>
 
-        <GroupBox Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Margin="15,0,0,0">
+        <GroupBox Grid.Column="1" Grid.Row="0" Grid.RowSpan="3" Margin="15,0,0,0">
             <GroupBox.Header>
                 <Label Content="DIAGNOSTICS" />
             </GroupBox.Header>

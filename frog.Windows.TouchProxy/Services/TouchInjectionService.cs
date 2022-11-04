@@ -141,6 +141,27 @@ namespace frog.Windows.TouchProxy.Services
         }
 
 
+        private bool _use25DasClick = false;
+        public bool Use25DasClick
+        {
+            get { return _use25DasClick; }
+            set
+            {
+                _use25DasClick = value;
+            }
+        }
+
+        private float _clickThreshold = 0.5f;
+        public float ClickThreshold
+        {
+            get { return _clickThreshold; }
+            set
+            {
+                _clickThreshold = value;
+            }
+        }
+
+
         public static TextConstraintPredicateDelegate IsPortValidPredicate
 		{
 			get
@@ -362,8 +383,11 @@ namespace frog.Windows.TouchProxy.Services
 		}
 
 		private void Start()
-		{
-			if (_tuioClient != null) 
+        {
+
+
+
+            if (_tuioClient != null) 
 			{ 
 				Stop(); 
 			}
@@ -592,6 +616,15 @@ namespace frog.Windows.TouchProxy.Services
             {
                 UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y);
 
+                if (_use25DasClick)
+                {
+
+                    int x = (int)((tuioCursor.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
+                    int y = (int)((tuioCursor.Y * (_screenRect.Height + _calibrationBuffer.Height)) + _calibrationBuffer.Top + _screenRect.Top);
+
+                    ControlMouseRightButton(x,y,tuioCursor.Z);
+                }
+
                 Trace.WriteLine(string.Format("set 25Dcur {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
@@ -622,6 +655,15 @@ namespace frog.Windows.TouchProxy.Services
             {
                 UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y);
 
+                if (_use25DasClick)
+                {
+
+                    int x = (int)((tuioObject.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
+                    int y = (int)((tuioObject.Y * (_screenRect.Height + _calibrationBuffer.Height)) + _calibrationBuffer.Top + _screenRect.Top);
+
+                    ControlMouseRightButton(x, y, tuioObject.Z);
+                }
+
                 Trace.WriteLine(string.Format("set 25Dobj {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
@@ -651,6 +693,15 @@ namespace frog.Windows.TouchProxy.Services
             if (_use25DBlob)
             {
                 UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y);
+
+                if (_use25DasClick)
+                {
+
+                    int x = (int)((tuioBlob.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
+                    int y = (int)((tuioBlob.Y * (_screenRect.Height + _calibrationBuffer.Height)) + _calibrationBuffer.Top + _screenRect.Top);
+
+                    ControlMouseRightButton(x, y, tuioBlob.Z);
+                }
 
                 Trace.WriteLine(string.Format("set 25Dblb {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
@@ -808,7 +859,22 @@ namespace frog.Windows.TouchProxy.Services
 			}	
 		}
 
-		private void InjectPointerTouchInfos()
+
+
+
+        private void ControlMouseRightButton(int x, int y,float value)
+        {
+   
+            if (!_isTouchInjectionSuspended)
+            {
+                // Clic where the touch is
+                KeyboardInjection.SendMouse(x,y,(value>_clickThreshold));
+            }
+
+        }
+
+
+        private void InjectPointerTouchInfos()
 		{
 			PointerTouchInfo[] pointerTouchInfos = _pointerTouchInfos.ToArray();
 

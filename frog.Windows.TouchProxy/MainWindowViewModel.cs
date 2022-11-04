@@ -117,10 +117,15 @@ namespace frog.Windows.TouchProxy
 
 			SetScreenDimensions();
 
-			SystemEvents.DisplaySettingsChanged += (s, e) =>
+            // Restart log screen need to be done after a load delay
+            Task.Delay(1000).ContinueWith(t => SetProtocolTrace());
+            
+
+
+            SystemEvents.DisplaySettingsChanged += (s, e) =>
 			{
 				SetScreenDimensions();
-			};
+            };
 
 			Application.Current.MainWindow.Closed += (s, e) =>
 			{
@@ -371,13 +376,28 @@ namespace frog.Windows.TouchProxy
                                                 });
                                             }
                                             break;
+                                        case "Use25DasClick":
+                                            bool use25DasClick;
+                                            if (Boolean.TryParse(value.Value, out use25DasClick))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.TouchInjectionService.Use25DasClick = use25DasClick;
+                                                });
+                                            }
+                                            break;
+                                        case "ClickThreshold":
+                                            this.TouchInjectionService.ClickThreshold = float.Parse(value.Value, System.Globalization.CultureInfo.InvariantCulture); 
+                                            break;
                                         case "Port":
 											int port;
 											if (Int32.TryParse(value.Value, out port))
 											{
 												this.TouchInjectionService.Port = port;
 											}
-																						break;
+											break;
 										case "SelectedScreenTarget":
 											ScreenTarget selectedScreenTarget;
 											if (Enum.TryParse(value.Value, true, out selectedScreenTarget))
@@ -450,9 +470,19 @@ namespace frog.Windows.TouchProxy
 											}
 											break;
 										case "IsProtocolTraceEnabled":
-											bool isProtocolTraceEnabled = Boolean.TryParse(value.Value, out isProtocolTraceEnabled) ? isProtocolTraceEnabled : this.IsProtocolTraceEnabled;
-											this.IsProtocolTraceEnabled = isProtocolTraceEnabled;
-											break;
+
+                                            bool isProtocolTraceEnabled;
+                                            if (Boolean.TryParse(value.Value, out isProtocolTraceEnabled))
+                                            {
+                                                CancellationTokenSource source = new CancellationTokenSource();
+                                                var t = Task.Run(async delegate
+                                                {
+                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
+                                                    this.IsProtocolTraceEnabled = isProtocolTraceEnabled;
+                                                    SetProtocolTrace();
+                                                });
+                                            }
+                                            break;
 										case "SelectedProtocolTraceCategory":
 											ProtocolTraceCategory selectedProtocolTraceCategory = Enum.TryParse(value.Value, true, out selectedProtocolTraceCategory) ? selectedProtocolTraceCategory : this.SelectedProtocolTraceCategory;
 											this.SelectedProtocolTraceCategory = selectedProtocolTraceCategory;
@@ -489,6 +519,8 @@ namespace frog.Windows.TouchProxy
                     new XElement("setting", new XAttribute("key", "Use3DCursor"), new XAttribute("value", this.TouchInjectionService.Use3DCursor)),
                     new XElement("setting", new XAttribute("key", "Use3DObject"), new XAttribute("value", this.TouchInjectionService.Use3DObject)),
                     new XElement("setting", new XAttribute("key", "Use3DBlob"), new XAttribute("value", this.TouchInjectionService.Use3DBlob)),
+                    new XElement("setting", new XAttribute("key", "Use25DasClick"), new XAttribute("value", this.TouchInjectionService.Use25DasClick)),
+                    new XElement("setting", new XAttribute("key", "ClickThreshold"), new XAttribute("value", this.TouchInjectionService.ClickThreshold)),
                     new XElement("setting", new XAttribute("key", "Port"), new XAttribute("value", this.TouchInjectionService.Port)),
 					new XElement("setting", new XAttribute("key", "SelectedScreenTarget"), new XAttribute("value", this.SelectedScreenTarget)),
 					new XElement("setting", new XAttribute("key", "IsContactEnabled"), new XAttribute("value", this.TouchInjectionService.IsContactEnabled)),

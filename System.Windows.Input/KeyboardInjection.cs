@@ -26,6 +26,20 @@ namespace System.Windows.Input
 			}
 		}
 
+
+        public static void SendMouse(int x, int y, bool leftButton)
+        {
+            NativeMethods.SendInput
+            (
+                1,
+                new InputInfo[]
+                {
+                        new InputInfo { Type = InputInfoType.MOUSE, Union = new InputUnion { MouseInput = new MouseInput { X = 0, Y = 0, MouseData = 0, Flags = MouseEventFlags.MOUSEEVENTF_MOVE |MouseEventFlags.MOUSEEVENTF_ABSOLUTE } } }
+                },
+                Marshal.SizeOf(typeof(InputInfo))
+            );
+        }
+
 		internal static class NativeMethods
 		{
 			[DllImport("User32.dll")]
@@ -74,7 +88,7 @@ namespace System.Windows.Input
 		internal int X;
 		internal int Y;
 		internal uint MouseData;
-		internal uint Flags;
+		internal MouseEventFlags Flags;
 		internal uint Time;
 		internal IntPtr ExtraInfo;
 	}
@@ -89,6 +103,7 @@ namespace System.Windows.Input
 
 	internal enum InputInfoType : uint
 	{
+        MOUSE = 0,
 		KEYBOARD = 1
 	}
 
@@ -102,4 +117,20 @@ namespace System.Windows.Input
 		KEYDOWN = 0x0000,
 		KEYUP = 0x0002,
 	}
+
+    enum MouseEventFlags : uint
+    {
+        MOUSEEVENTF_MOVE = 0x0001,
+        MOUSEEVENTF_LEFTDOWN = 0x0002,
+        MOUSEEVENTF_LEFTUP = 0x0004,
+        MOUSEEVENTF_RIGHTDOWN = 0x0008,
+        MOUSEEVENTF_RIGHTUP = 0x0010,
+        MOUSEEVENTF_MIDDLEDOWN = 0x0020,
+        MOUSEEVENTF_MIDDLEUP = 0x0040,
+        MOUSEEVENTF_XDOWN = 0x0080,
+        MOUSEEVENTF_XUP = 0x0100,
+        MOUSEEVENTF_WHEEL = 0x0800,
+        MOUSEEVENTF_VIRTUALDESK = 0x4000,
+        MOUSEEVENTF_ABSOLUTE = 0x8000
+    }
 }
