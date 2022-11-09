@@ -868,7 +868,7 @@ namespace frog.Windows.TouchProxy.Services
             if (!_isTouchInjectionSuspended)
             {
                 // Clic where the touch is
-                KeyboardInjection.SendMouse((value > _clickThreshold)? MouseEventFlags.MOUSEEVENTF_LEFTDOWN : MouseEventFlags.MOUSEEVENTF_LEFTUP,x,y,0);
+                KeyboardInjection.SendMouse((value > _clickThreshold)? MouseEventFlags.MOUSEEVENTF_LEFTDOWN : MouseEventFlags.MOUSEEVENTF_LEFTUP| MouseEventFlags.MOUSEEVENTF_MOVE , x,y,0);
             }
 
         }
