@@ -1,6 +1,7 @@
 /*
  TUIO C# Library - part of the reacTIVision project
- Copyright (c) 
+ Copyright (c) 2005-2016 Martin Kaltenbrunner <martin@tuio.org>
+ Modified by Bremard Nicolas <nicolas@bremard.fr> on 11/2022
 
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +22,7 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 
-using OSC.Windows;
+using OSC.NET;
 
 namespace TUIO
 {
@@ -40,13 +41,10 @@ namespace TUIO
      * </example>
      * 
      * @author Martin Kaltenbrunner
-     * @version 1.1.6
+     * @version 1.1.7
      */
     public class TuioClient
     {
-
-        private bool _isDisposed = false;
-
         private bool connected = false;
         private int port = 3333;
         private OSCReceiver receiver;
@@ -158,31 +156,6 @@ namespace TUIO
         {
             this.port = port;
         }
-
-        ~TuioClient()
-        {
-            this.Dispose(false);
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool isDisposing)
-        {
-            if (!_isDisposed)
-            {
-                if (isDisposing)
-                {
-                    disconnect();
-                    receiver.Dispose();
-                }
-            }
-            _isDisposed = true;
-        }
-
         #endregion
 
         #region Connection Methods
@@ -288,7 +261,7 @@ namespace TUIO
                     {
                         if (packet.IsBundle())
                         {
-                            List<object> messages = packet.Values;
+                            ArrayList messages = packet.Values;
                             for (int i = 0; i < messages.Count; i++)
                             {
                                 processMessage((OSCMessage)messages[i]);
@@ -312,7 +285,7 @@ namespace TUIO
         private void processMessage(OSCMessage message)
         {
             string address = message.Address;
-            List<object> args = message.Values;
+            ArrayList args = message.Values;
             string command = (string)args[0];
 
             if (address == "/tuio/2Dobj")
