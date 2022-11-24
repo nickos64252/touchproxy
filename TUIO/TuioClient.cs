@@ -22,7 +22,7 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 
-using OSC.NET;
+using OSC.Windows;
 
 namespace TUIO
 {
@@ -45,6 +45,8 @@ namespace TUIO
      */
     public class TuioClient
     {
+        private bool _isDisposed = false;
+
         private bool connected = false;
         private int port = 3333;
         private OSCReceiver receiver;
@@ -156,6 +158,31 @@ namespace TUIO
         {
             this.port = port;
         }
+
+        ~TuioClient()
+        {
+            this.Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (!_isDisposed)
+            {
+                if (isDisposing)
+                {
+                    disconnect();
+                    receiver.Dispose();
+                }
+            }
+            _isDisposed = true;
+        }
+
         #endregion
 
         #region Connection Methods
@@ -261,7 +288,7 @@ namespace TUIO
                     {
                         if (packet.IsBundle())
                         {
-                            ArrayList messages = packet.Values;
+                            List<object> messages = packet.Values;
                             for (int i = 0; i < messages.Count; i++)
                             {
                                 processMessage((OSCMessage)messages[i]);
@@ -285,7 +312,7 @@ namespace TUIO
         private void processMessage(OSCMessage message)
         {
             string address = message.Address;
-            ArrayList args = message.Values;
+            List<object> args = message.Values;
             string command = (string)args[0];
 
             if (address == "/tuio/2Dobj")
