@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Windows.Media;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -15,6 +16,7 @@ using Microsoft.Win32;
 using frog.Windows.TouchProxy.Common;
 using frog.Windows.TouchProxy.Diagnostics;
 using frog.Windows.TouchProxy.Services;
+using System.Reflection;
 
 namespace frog.Windows.TouchProxy
 {
@@ -168,21 +170,34 @@ namespace frog.Windows.TouchProxy
 			}), DispatcherPriority.Normal);
 		}
 
-		private void SetScreenDimensions()
+
+
+        private void SetScreenDimensions()
 		{
-			int primaryScreenWidth = (int)SystemParameters.PrimaryScreenWidth;
-			int primaryScreenHeight = (int)SystemParameters.PrimaryScreenHeight;
+            // Compute DPI to convert SystemParameters.PrimaryScreenWidthinto pixels
+            var dpiXProperty = typeof(SystemParameters).GetProperty("DpiX", BindingFlags.NonPublic | BindingFlags.Static);
+            var dpiYProperty = typeof(SystemParameters).GetProperty("Dpi", BindingFlags.NonPublic | BindingFlags.Static);
+
+            var dpiX = (int)dpiXProperty.GetValue(null, null);
+            var dpiY = (int)dpiYProperty.GetValue(null, null);
+
+
+            int primaryScreenWidth = (int)(SystemParameters.PrimaryScreenWidth * dpiX / 96); 
+			int primaryScreenHeight = (int)(SystemParameters.PrimaryScreenHeight * dpiY / 96);
 			int virtualScreenWidth = (int)SystemParameters.VirtualScreenWidth;
 			int virtualScreenHeight = (int)SystemParameters.VirtualScreenHeight;
+            
 
-			bool isScreenTargetVirtual = this.SelectedScreenTarget.Equals(ScreenTarget.Virtual);
+            bool isScreenTargetVirtual = this.SelectedScreenTarget.Equals(ScreenTarget.Virtual);
 
 			int width = isScreenTargetVirtual ? virtualScreenWidth : primaryScreenWidth;
 			int height = isScreenTargetVirtual ? virtualScreenHeight : primaryScreenHeight;
 			int left = isScreenTargetVirtual ? (int)SystemParameters.VirtualScreenLeft : 0;
 			int top = isScreenTargetVirtual ? (int)SystemParameters.VirtualScreenTop : 0;
 
-			this.TouchInjectionService.ScreenRect = new Rect(left, top, width, height);
+            
+
+            this.TouchInjectionService.ScreenRect = new Rect(left, top, width, height);
 
 			double aspectRatio = (double)height / width;
 
