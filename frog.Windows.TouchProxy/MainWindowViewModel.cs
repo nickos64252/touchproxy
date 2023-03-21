@@ -284,8 +284,8 @@ namespace frog.Windows.TouchProxy
 												}
 												break;
                                         case "Use2DCursor":
-                                            bool use2DCursor;
-                                            if (Boolean.TryParse(value.Value, out use2DCursor))
+                                            int use2DCursor;
+                                            if (int.TryParse(value.Value, out use2DCursor))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -296,8 +296,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use2DObject":
-                                            bool use2DObject;
-                                            if (Boolean.TryParse(value.Value, out use2DObject))
+                                            int use2DObject;
+                                            if (int.TryParse(value.Value, out use2DObject))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -308,8 +308,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use2DBlob":
-                                            bool use2DBlob;
-                                            if (Boolean.TryParse(value.Value, out use2DBlob))
+                                            int use2DBlob;
+                                            if (int.TryParse(value.Value, out use2DBlob))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -320,8 +320,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use25DCursor":
-                                            bool use25DCursor;
-                                            if (Boolean.TryParse(value.Value, out use25DCursor))
+                                            int use25DCursor;
+                                            if (int.TryParse(value.Value, out use25DCursor))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -332,8 +332,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use25DObject":
-                                            bool use25DObject;
-                                            if (Boolean.TryParse(value.Value, out use25DObject))
+                                            int use25DObject;
+                                            if (int.TryParse(value.Value, out use25DObject))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -344,8 +344,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use25DBlob":
-                                            bool use25DBlob;
-                                            if (Boolean.TryParse(value.Value, out use25DBlob))
+                                            int use25DBlob;
+                                            if (int.TryParse(value.Value, out use25DBlob))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -356,8 +356,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use3DCursor":
-                                            bool use3DCursor;
-                                            if (Boolean.TryParse(value.Value, out use3DCursor))
+                                            int use3DCursor;
+                                            if (int.TryParse(value.Value, out use3DCursor))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -368,8 +368,8 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use3DObject":
-                                            bool use3DObject;
-                                            if (Boolean.TryParse(value.Value, out use3DObject))
+                                            int use3DObject;
+                                            if (int.TryParse(value.Value, out use3DObject))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
@@ -380,26 +380,14 @@ namespace frog.Windows.TouchProxy
                                             }
                                             break;
                                         case "Use3DBlob":
-                                            bool use3DBlob;
-                                            if (Boolean.TryParse(value.Value, out use3DBlob))
+                                            int use3DBlob;
+                                            if (int.TryParse(value.Value, out use3DBlob))
                                             {
                                                 CancellationTokenSource source = new CancellationTokenSource();
                                                 var t = Task.Run(async delegate
                                                 {
                                                     await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
                                                     this.TouchInjectionService.Use3DBlob = use3DBlob;
-                                                });
-                                            }
-                                            break;
-                                        case "Use25DasClick":
-                                            bool use25DasClick;
-                                            if (Boolean.TryParse(value.Value, out use25DasClick))
-                                            {
-                                                CancellationTokenSource source = new CancellationTokenSource();
-                                                var t = Task.Run(async delegate
-                                                {
-                                                    await Task.Delay(TimeSpan.FromSeconds(0.1), source.Token);
-                                                    this.TouchInjectionService.Use25DasClick = use25DasClick;
                                                 });
                                             }
                                             break;
@@ -420,13 +408,13 @@ namespace frog.Windows.TouchProxy
 												this.SelectedScreenTarget = selectedScreenTarget;
 											}
 											break;
-										case "IsContactEnabled":
+										/*case "IsContactEnabled":
 											bool isContactEnabled;
 											if (Boolean.TryParse(value.Value, out isContactEnabled))
 											{
 												this.TouchInjectionService.IsContactEnabled = isContactEnabled;
 											}
-											break;
+											break;*/
 										case "IsContactVisible":
 											bool isContactVisible;
 											if (Boolean.TryParse(value.Value, out isContactVisible))
@@ -538,7 +526,7 @@ namespace frog.Windows.TouchProxy
                     new XElement("setting", new XAttribute("key", "ClickThreshold"), new XAttribute("value", this.TouchInjectionService.ClickThreshold)),
                     new XElement("setting", new XAttribute("key", "Port"), new XAttribute("value", this.TouchInjectionService.Port)),
 					new XElement("setting", new XAttribute("key", "SelectedScreenTarget"), new XAttribute("value", this.SelectedScreenTarget)),
-					new XElement("setting", new XAttribute("key", "IsContactEnabled"), new XAttribute("value", this.TouchInjectionService.IsContactEnabled)),
+					//new XElement("setting", new XAttribute("key", "IsContactEnabled"), new XAttribute("value", this.TouchInjectionService.IsContactEnabled)),
 					new XElement("setting", new XAttribute("key", "IsContactVisible"), new XAttribute("value", this.TouchInjectionService.IsContactVisible)),
 					new XElement("setting", new XAttribute("key", "IsWindowsKeyPressEnabled"), new XAttribute("value", this.TouchInjectionService.IsWindowsKeyPressEnabled)),
 					new XElement("setting", new XAttribute("key", "WindowsKeyPressTouchCount"), new XAttribute("value", this.TouchInjectionService.WindowsKeyPressTouchCount)),

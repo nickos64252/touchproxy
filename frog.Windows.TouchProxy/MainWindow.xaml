@@ -55,7 +55,7 @@
                         <TextBlock Text="Display Target:" Width="85" VerticalAlignment="Center" />
                         <ComboBox ItemsSource="{Binding Path=ScreenTargets}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding Path=SelectedScreenTarget, Mode=TwoWay}" VerticalAlignment="Center" />
                     </StackPanel>
-                    <CheckBox IsChecked="{Binding Path=TouchInjectionService.IsContactEnabled, Mode=TwoWay}" Content="Enable Contacts" Margin="0,12,0,0" />
+                    <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.IsContactEnabled, Mode=TwoWay}" Content="Enable Contacts" Margin="0,12,0,0" /-->
                     <CheckBox IsChecked="{Binding Path=TouchInjectionService.IsWindowsKeyPressEnabled, Mode=TwoWay}" Margin="0,5,0,0">
                         <CheckBox.Content>
                             <StackPanel Orientation="Horizontal">
@@ -203,25 +203,34 @@
             <GroupBox.Header>
                 <Label Content="MAPPING" />
             </GroupBox.Header>
-            <Grid Width="480" Height="120">
+            <Grid Height="120" Margin="-10,0,-10,-28">
                 <StackPanel Orientation="Vertical">
                     <DockPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
                             <StackPanel Orientation="Vertical" Margin="0,0,0,0">
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DCursor, Mode=TwoWay}" Content="Use 2DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DObject, Mode=TwoWay}" Content="Use 2DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DBlob, Mode=TwoWay}" Content="Use 2DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <Slider Tag="Use 2DCur" Value="{Binding Path=TouchInjectionService.Use2DCursor, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <Slider Tag="Use 2DObj" Value="{Binding Path=TouchInjectionService.Use2DObject, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <Slider Tag="Use 2DBlb" Value="{Binding Path=TouchInjectionService.Use2DBlob, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <!-- CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DCursor, Mode=TwoWay}" Content="Use 2DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DObject, Mode=TwoWay}" Content="Use 2DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use2DBlob, Mode=TwoWay}" Content="Use 2DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
                             </StackPanel>
                             <StackPanel Orientation="Vertical" Margin="20,0,0,0">
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DCursor, Mode=TwoWay}" Content="Use 25DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DObject, Mode=TwoWay}" Content="Use 25DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DBlob, Mode=TwoWay}" Content="Use 25DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <Slider Tag="Use 25DCur" Value="{Binding Path=TouchInjectionService.Use25DCursor, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <Slider Tag="Use 25DObj" Value="{Binding Path=TouchInjectionService.Use25DObject, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <Slider Tag="Use 25DBlb" Value="{Binding Path=TouchInjectionService.Use25DBlob, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DCursor, Mode=TwoWay}" Content="Use 25DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DObject, Mode=TwoWay}" Content="Use 25DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use25DBlob, Mode=TwoWay}" Content="Use 25DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
                             </StackPanel>
                             <StackPanel Orientation="Vertical" Margin="20,0,0,0">
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DCursor, Mode=TwoWay}" Content="Use 3DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DObject, Mode=TwoWay}" Content="Use 3DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
-                                <CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DBlob, Mode=TwoWay}" Content="Use 3DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
+                                <Slider Tag="Use 3DCur" Value="{Binding Path=TouchInjectionService.Use3DCursor, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <Slider Tag="Use 3DObj" Value="{Binding Path=TouchInjectionService.Use3DObject, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <Slider Tag="Use 3DBlb" Value="{Binding Path=TouchInjectionService.Use3DBlob, Mode=TwoWay}" Style="{StaticResource SliderChecker}" />
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DCursor, Mode=TwoWay}" Content="Use 3DCur" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DObject, Mode=TwoWay}" Content="Use 3DObj" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+                                <!--CheckBox IsChecked="{Binding Path=TouchInjectionService.Use3DBlob, Mode=TwoWay}" Content="Use 3DBlb" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
                             </StackPanel>
                         </StackPanel>
 
@@ -229,9 +238,11 @@
                     <DockPanel >
 
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                            <CheckBox x:Name="Click25D" IsChecked="{Binding Path=TouchInjectionService.Use25DasClick, Mode=TwoWay}" Content="Use 25D as Click" Style="{StaticResource ToggleSwitchCheckBoxStyle}" />
 
-                            <StackPanel Orientation="Horizontal" Margin="30,10,0,0" IsEnabled="{Binding ElementName=Click25D, Path=IsChecked}">
+
+                            <!--CheckBox x:Name="Click25D" IsChecked="{Binding Path=TouchInjectionService.Use25DasClick, Mode=TwoWay}" Content="Use 25D as Click" Style="{StaticResource ToggleSwitchCheckBoxStyle}" /-->
+
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" IsEnabled="{Binding ElementName=Click25D, Path=IsChecked}">
                                 <TextBlock Text="Click Threshold :" Width="85" VerticalAlignment="Top" />
                                 <TextBox  Text="{Binding Path=TouchInjectionService.ClickThreshold, Mode=TwoWay}" Width="100" HorizontalAlignment="Right" VerticalAlignment="Top" />
                             </StackPanel>
