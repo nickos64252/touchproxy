@@ -181,6 +181,10 @@
                 <Setter Property="Background" Value="#00FF00" />
                 <Setter TargetName="Change"  Property="Content" Value="Contact" />
             </Trigger>
+            <Trigger Property="Value" Value="4">
+                <Setter Property="Background" Value="#00FFFF" />
+                <Setter TargetName="Change"  Property="Content" Value="Auto" />
+            </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
@@ -190,7 +194,7 @@
         <Setter Property="SnapsToDevicePixels" Value="false" />
         <Setter Property="OverridesDefaultStyle" Value="true" />
         <Setter Property="Minimum" Value="0" />
-        <Setter Property="Maximum" Value="3" />
+        <Setter Property="Maximum" Value="4" />
         <Setter Property="Width" Value="162" />
         <Setter Property="TickFrequency" Value="1" />
         <Setter Property="IsMoveToPointEnabled" Value="True" />
@@ -237,6 +241,15 @@
                 </MultiTrigger.Conditions>
                 <MultiTrigger.Setters>
                     <Setter Property="Background" Value="#00BB00" />
+                </MultiTrigger.Setters>
+            </MultiTrigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="Value" Value="4" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <MultiTrigger.Setters>
+                    <Setter Property="Background" Value="#00BBBB" />
                 </MultiTrigger.Setters>
             </MultiTrigger>
         </Style.Triggers>

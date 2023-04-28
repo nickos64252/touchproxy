@@ -394,6 +394,9 @@ namespace frog.Windows.TouchProxy
                                         case "ClickThreshold":
                                             this.TouchInjectionService.ClickThreshold = float.Parse(value.Value, System.Globalization.CultureInfo.InvariantCulture); 
                                             break;
+                                        case "HoverThreshold":
+                                            this.TouchInjectionService.HoverThreshold = float.Parse(value.Value, System.Globalization.CultureInfo.InvariantCulture);
+                                            break;
                                         case "Port":
 											int port;
 											if (Int32.TryParse(value.Value, out port))
@@ -524,6 +527,7 @@ namespace frog.Windows.TouchProxy
                     new XElement("setting", new XAttribute("key", "Use3DBlob"), new XAttribute("value", this.TouchInjectionService.Use3DBlob)),
                     new XElement("setting", new XAttribute("key", "Use25DasClick"), new XAttribute("value", this.TouchInjectionService.Use25DasClick)),
                     new XElement("setting", new XAttribute("key", "ClickThreshold"), new XAttribute("value", this.TouchInjectionService.ClickThreshold)),
+                    new XElement("setting", new XAttribute("key", "HoverThreshold"), new XAttribute("value", this.TouchInjectionService.HoverThreshold)),
                     new XElement("setting", new XAttribute("key", "Port"), new XAttribute("value", this.TouchInjectionService.Port)),
 					new XElement("setting", new XAttribute("key", "SelectedScreenTarget"), new XAttribute("value", this.SelectedScreenTarget)),
 					//new XElement("setting", new XAttribute("key", "IsContactEnabled"), new XAttribute("value", this.TouchInjectionService.IsContactEnabled)),

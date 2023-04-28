@@ -21,7 +21,7 @@ namespace frog.Windows.TouchProxy.Services
 		public const uint MAX_CONTACTS = 256;
 		public const int CONTACT_AREA_RADIUS = 24;
 
-		private const uint TOUCH_ORIENTATION = 0;
+		private const int TOUCH_ORIENTATION = 0;
 		private const uint TOUCH_PRESSURE = 1024;
 		private const int DEFAULT_WINDOWS_KEY_PRESS_TOUCH_COUNT = 5;
 		private const double CALIBRATION_BUFFER_MAXLENGTH = 999999;
@@ -158,6 +158,16 @@ namespace frog.Windows.TouchProxy.Services
             set
             {
                 _clickThreshold = value;
+            }
+        }
+
+        private float _hoverThreshold = 0.5f;
+        public float HoverThreshold
+        {
+            get { return _hoverThreshold; }
+            set
+            {
+                _hoverThreshold = value;
             }
         }
 
@@ -347,8 +357,10 @@ namespace frog.Windows.TouchProxy.Services
 
 		public TouchInjectionService()
 		{
-			_refreshTimer.Tick += (s, e) => 
-			{ 
+            
+
+            _refreshTimer.Tick += (s, e) => 
+			{
 				InjectPointerTouchInfos(); 
 			};
 		}
@@ -418,48 +430,54 @@ namespace frog.Windows.TouchProxy.Services
 			}
 		}
 
-        private void AddTouch(int pid,  float tx,float ty, bool contact)
+        private void AddTouch(int pid,  float tx,float ty, bool contact, int width,int height, int orientation)
         {
             _refreshTimer.Stop();
 
  
             int i = _pointerTouchInfos.FindIndex(pti => pti.PointerInfo.PointerId == pid);
-            if (i != -1)
+            if (i != -1) // Touch is already present -> call update
             {
-                _pointerTouchInfos.RemoveAt(i);
+                //_pointerTouchInfos.RemoveAt(i);
+                UpdateTouch(pid, tx, ty, contact, width, height, orientation);
+            }
+            else
+            {
+                // Create touch
+                int x = (int)((tx * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
+                int y = (int)((ty * (_screenRect.Height + _calibrationBuffer.Height)) + _calibrationBuffer.Top + _screenRect.Top);
+
+                _pointerTouchInfos.Add
+                (
+                    new PointerTouchInfo()
+                    {
+                        TouchFlags = TouchFlags.NONE,
+                        Orientation = (uint)orientation,
+                        Pressure = TOUCH_PRESSURE,
+                        TouchMasks = TouchMask.CONTACTAREA | TouchMask.ORIENTATION | TouchMask.PRESSURE,
+                        PointerInfo = new PointerInfo
+                        {
+                            PointerInputType = PointerInputType.TOUCH,
+                            PointerFlags = PointerFlags.DOWN | PointerFlags.INRANGE | ((contact) ? PointerFlags.INCONTACT : PointerFlags.NONE),
+                            PtPixelLocation = new PointerTouchPoint { X = x, Y = y },
+                            PointerId = (uint)pid
+                        },
+                        ContactArea = new ContactArea
+                        {
+                            Left = x - (width / 2),
+                            Right = x + (width / 2),
+                            Top = y - (height / 2),
+                            Bottom = y + (height / 2)
+                        }
+                    }
+                );
             }
 
-            int x = (int)((tx * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
-            int y = (int)((ty * (_screenRect.Height + _calibrationBuffer.Height)) + _calibrationBuffer.Top + _screenRect.Top);
 
-            _pointerTouchInfos.Add
-            (
-                new PointerTouchInfo()
-                {
-                    TouchFlags = TouchFlags.NONE,
-                    Orientation = TOUCH_ORIENTATION,
-                    Pressure = TOUCH_PRESSURE,
-                    TouchMasks = TouchMask.CONTACTAREA | TouchMask.ORIENTATION | TouchMask.PRESSURE,
-                    PointerInfo = new PointerInfo
-                    {
-                        PointerInputType = PointerInputType.TOUCH,
-                        PointerFlags = PointerFlags.DOWN | PointerFlags.INRANGE | ((contact) ? PointerFlags.INCONTACT : PointerFlags.NONE),
-                        PtPixelLocation = new PointerTouchPoint { X = x, Y = y },
-                        PointerId = (uint)pid
-                    },
-                    ContactArea = new ContactArea
-                    {
-                        Left = x - CONTACT_AREA_RADIUS,
-                        Right = x + CONTACT_AREA_RADIUS,
-                        Top = y - CONTACT_AREA_RADIUS,
-                        Bottom = y + CONTACT_AREA_RADIUS
-                    }
-                }
-            );
 
         }
 
-        private void UpdateTouch(int pid, float tx, float ty, bool contact)
+        private void UpdateTouch(int pid, float tx, float ty, bool contact, int width, int height, int orientation)
         {
             _refreshTimer.Stop();
 
@@ -470,14 +488,15 @@ namespace frog.Windows.TouchProxy.Services
                 int y = (int)((ty * (_screenRect.Height + _calibrationBuffer.Height)) + _calibrationBuffer.Top + _screenRect.Top);
 
                 PointerTouchInfo pointerTouchInfo = _pointerTouchInfos[i];
+                pointerTouchInfo.Orientation = (uint)orientation;
                 pointerTouchInfo.PointerInfo.PointerFlags = PointerFlags.UPDATE | PointerFlags.INRANGE | ((contact) ? PointerFlags.INCONTACT : PointerFlags.NONE);
                 pointerTouchInfo.PointerInfo.PtPixelLocation = new PointerTouchPoint { X = x, Y = y };
                 pointerTouchInfo.ContactArea = new ContactArea
                 {
-                    Left = x - CONTACT_AREA_RADIUS,
-                    Right = x + CONTACT_AREA_RADIUS,
-                    Top = y - CONTACT_AREA_RADIUS,
-                    Bottom = y + CONTACT_AREA_RADIUS
+                    Left = x - (width / 2),
+                    Right = x + (width / 2),
+                    Top = y - (height / 2),
+                    Bottom = y + (height / 2)
                 };
                 _pointerTouchInfos[i] = pointerTouchInfo;
 
@@ -492,7 +511,9 @@ namespace frog.Windows.TouchProxy.Services
             if (i != -1)
             {
                 PointerTouchInfo pointerTouchInfo = _pointerTouchInfos[i];
-                pointerTouchInfo.PointerInfo.PointerFlags = ((_pointerTouchInfos[i].PointerInfo.PointerFlags.HasFlag(PointerFlags.INCONTACT)) ? PointerFlags.UP : PointerFlags.UPDATE);
+                //bool isInContact = _pointerTouchInfos[i].PointerInfo.PointerFlags.HasFlag(PointerFlags.INCONTACT);
+                //pointerTouchInfo.PointerInfo.PointerFlags = (isInContact ? PointerFlags.UP : PointerFlags.UPDATE);
+                pointerTouchInfo.PointerInfo.PointerFlags = PointerFlags.UP;
                 _pointerTouchInfos[i] = pointerTouchInfo;
 
                 return true;
@@ -504,21 +525,29 @@ namespace frog.Windows.TouchProxy.Services
 
         public void addTuioCursor(TuioCursor tuioCursor)
         {
+            //Trace.WriteLine("add 2Dcur", "TUIO");
+
             if (_use2DCursor == 2)
             {
-                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y,false);
-                Trace.WriteLine(string.Format("add 2Dcur (Hover) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y,false, 2*CONTACT_AREA_RADIUS, 2*CONTACT_AREA_RADIUS,TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 2Dcur (Hover) id:{0} (sid:{1}) x:{2} y:{3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
             }
             if (_use2DCursor == 3)
             {
-                AddTouch(tuioCursor.CursorID,  tuioCursor.X, tuioCursor.Y,true);
-                Trace.WriteLine(string.Format("add 2Dcur (Contact) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
-
+                AddTouch(tuioCursor.CursorID,  tuioCursor.X, tuioCursor.Y,true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 2Dcur (Contact) id:{0} (sid:{1}) x:{2} y:{3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+            }
+            if (_use2DCursor == 4)
+            {
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 2Dcur (Auto(Contact/2D)) id:{0} (sid:{1}) x:{2} y:{3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
             }
         }
 
 		public void updateTuioCursor(TuioCursor tuioCursor)
-		{
+        {
+            //Trace.WriteLine("set 2Dcur", "TUIO");
+
             if (_use2DCursor == 1)
             {
                 int x = (int)((tuioCursor.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
@@ -526,49 +555,66 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioCursor.Z);
 
-                Trace.WriteLine(string.Format("set 2Dcur (Click) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+                Trace.WriteLine(string.Format("set 2Dcur (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
             }
 
             if (_use2DCursor == 2)
             {
-                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false);
-                Trace.WriteLine(string.Format("set 2Dcur (Hover) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("set 2Dcur (Hover) id:{0} (sid:{1}) x:{2} y:{3} sp:{4} acc:{5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
 
             if (_use2DCursor == 3)
             {
-                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y,true);
-                Trace.WriteLine(string.Format("set 2Dcur (Contact) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
-
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y,true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("set 2Dcur (Contact) id:{0} (sid:{1}) x:{2} y:{3} sp:{4} acc:{5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
             }
-		}
+            if (_use2DCursor == 4)
+            {
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("set 2Dcur (Auto(Contact/2D)) id:{0} (sid:{1}) x:{2} y:{3} sp:{4} acc:{5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+            }
+        }
 
 		public void removeTuioCursor(TuioCursor tuioCursor)
-		{
-            if (_use2DCursor == 2 || _use2DCursor == 3)
+        {
+            //Trace.WriteLine("del 2Dcur", "TUIO");
+
+            if (_use2DCursor == 2 || _use2DCursor == 3 || _use2DCursor == 4)
             {
                 if(RemoveTouch(tuioCursor.CursorID))
-                    Trace.WriteLine(string.Format("del 2Dcur {0} ({1})", tuioCursor.CursorID, tuioCursor.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 2Dcur id:{0} (sid:{1})", tuioCursor.CursorID, tuioCursor.SessionID), "TUIO");
             }
 		}
 
 		public void addTuioObject(TuioObject tuioObject)
         {
+            //Trace.WriteLine("add 2Dobj", "TUIO");
+
+            int angle = (int)(180.0f * tuioObject.Angle / 3.14159f);
             if (_use2DObject == 2)
             {
-                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false);
-                Trace.WriteLine(string.Format("add 2Dobj (Hover) {0} ({1}) {2} {3}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y), "TUIO");
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 2Dobj (Hover) id:{0} (sid:{1}) x:{2} y:{3} a:{4}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, angle), "TUIO");
             }
             if (_use2DObject == 3)
             {
-                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true);
-                Trace.WriteLine(string.Format("add 2Dobj (Contact) {0} ({1}) {2} {3}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y), "TUIO");
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 2Dobj (Contact) id:{0} (sid:{1}) x:{2} y:{3} a:{4}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, angle), "TUIO");
+            }
+            if (_use2DObject == 4)
+            {
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 2Dobj (Auto(Contact/2D)) id:{0} (sid:{1}) x:{2} y:{3} a:{4}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, angle), "TUIO");
             }
         }
 
 		public void updateTuioObject(TuioObject tuioObject)
         {
+            //Trace.WriteLine("set 2Dobj", "TUIO");
+
+            int angle = (int)(180.0f * tuioObject.Angle / 3.14159f);
 
             if (_use2DObject == 1)
             {
@@ -577,48 +623,65 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioObject.Z);
 
-                Trace.WriteLine(string.Format("set 2Dobj (Click) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 2Dobj (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
             if (_use2DObject == 2)
             {
-                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false);
-                Trace.WriteLine(string.Format("set 2Dobj (Hover) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("set 2Dobj (Hover) id:{0} (sid:{1}) x:{2} y:{3} a:{4} sp:{5} acc:{6}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
             }
             if (_use2DObject == 3)
             {
-                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true);
-                Trace.WriteLine(string.Format("set 2Dobj (Contact) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("set 2Dobj (Contact) id:{0} (sid:{1}) x:{2} y:{3} a:{4} sp:{5} acc:{6}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+            }
+            if (_use2DObject == 4)
+            {
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("set 2Dobj (Auto(Contact/2D)) id:{0} (sid:{1}) x:{2} y:{3} a:{4} sp:{5} acc:{6}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
             }
         }
 
 		public void removeTuioObject(TuioObject tuioObject)
         {
-            if (_use2DObject == 2 || _use2DObject == 3)
+            //Trace.WriteLine("del 2Dobj", "TUIO");
+
+            if (_use2DObject == 2 || _use2DObject == 3 || _use2DObject == 4)
             {
                 if (RemoveTouch(tuioObject.SymbolID))
-                    Trace.WriteLine(string.Format("del 2Dobj {0} ({1})", tuioObject.SymbolID, tuioObject.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 2Dobj id:{0} (sid:{1})", tuioObject.SymbolID, tuioObject.SessionID), "TUIO");
             }
         }
 
         public void addTuioBlob(TuioBlob tuioBlob)
         {
+            //Trace.WriteLine("add 2Dblb", "TUIO");
+
+            int angle = (int)(180.0f * tuioBlob.Angle / 3.14159f);
             if (_use2DBlob == 2)
             {
-                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false);
-                Trace.WriteLine(string.Format("add 2Dblb (Hover) {0} ({1}) {2} {3}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y), "TUIO");
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 2Dblb (Hover) id:{0} (sid:{1}) x:{2} y:{3} a:{4} w:{5} h:{6}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
 
             }
             if (_use2DBlob == 3)
             {
-                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true);
-                Trace.WriteLine(string.Format("add 2Dblb (Contact) {0} ({1}) {2} {3}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y), "TUIO");
-
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 2Dblb (Contact) id:{0} (sid:{1}) x:{2} y:{3} a:{4} w:{5} h:{6}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
+            }
+            if (_use2DBlob == 4)
+            {
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 2Dblb (Auto(Contact/2D)) id:{0} (sid:{1}) x:{2} y:{3} a:{4} w:{5} h:{6}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
             }
         }
 
         public void updateTuioBlob(TuioBlob tuioBlob)
         {
+            //Trace.WriteLine("set 2Dblb", "TUIO");
+
+            int angle = (int)(180.0f * tuioBlob.Angle / 3.14159f);
             if (_use2DBlob == 1)
             {
                 int x = (int)((tuioBlob.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
@@ -626,32 +689,41 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioBlob.Z);
 
-                Trace.WriteLine(string.Format("set 2Dblb (Click) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 2Dblb (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
                 
             }
 
             if (_use2DBlob == 2)
             {
-                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false);
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
 
-                Trace.WriteLine(string.Format("set 2Dblb (Hover) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 2Dblb (Hover) id:{0} (sid:{1}) x:{2} y:{3} a:{4} w:{5} h:{6} sp:{7} acc:{8}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
             if (_use2DBlob == 3)
             {
-                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true);
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
 
-                Trace.WriteLine(string.Format("set 2Dblb (Contact) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 2Dblb (Contact) id:{0} (sid:{1}) x:{2} y:{3} a:{4} w:{5} h:{6} sp:{7} acc:{8}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+
+            }
+            if (_use2DBlob == 4)
+            {
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+
+                Trace.WriteLine(string.Format("set 2Dblb (Auto(Contact/2D)) id:{0} (sid:{1}) x:{2} y:{3} a:{4} w:{5} h:{6} sp:{7} acc:{8}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
         }
 
         public void removeTuioBlob(TuioBlob tuioBlob)
         {
-            if (_use2DBlob == 2 || _use2DBlob == 3)
+            //Trace.WriteLine("del 2Dblb", "TUIO");
+
+            if (_use2DBlob == 2 || _use2DBlob == 3 || _use2DBlob == 4)
             {
                 if (RemoveTouch(tuioBlob.BlobID))
-                    Trace.WriteLine(string.Format("del 2Dblb {0} ({1})", tuioBlob.BlobID, tuioBlob.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 2Dblb id:{0} (sid:{1})", tuioBlob.BlobID, tuioBlob.SessionID), "TUIO");
             }
         }
 
@@ -661,14 +733,20 @@ namespace frog.Windows.TouchProxy.Services
         {
             if (_use25DCursor == 2)
             {
-                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false);
-                Trace.WriteLine(string.Format("add 25Dcur (Hover) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS,TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 25Dcur (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
 
             }
             if (_use25DCursor == 3)
             {
-                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true);
-                Trace.WriteLine(string.Format("add 25Dcur (Contact) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 25Dcur (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
+
+            }
+            if (_use25DCursor == 4)
+            {
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, (tuioCursor.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 25Dcur (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5}", (tuioCursor.Z > _hoverThreshold)?"Hover":"Contact", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
 
             }
         }
@@ -683,52 +761,66 @@ namespace frog.Windows.TouchProxy.Services
                 ControlMouseRightButton(x, y, tuioCursor.Z);
 
 
-                Trace.WriteLine(string.Format("set 25Dcur (Click) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dcur (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
             if (_use25DCursor == 2)
             {
-                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false);
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
                 
-                Trace.WriteLine(string.Format("set 25Dcur (Hover) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dcur (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
             if (_use25DCursor == 3)
             {
-                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true);
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
                 
-                Trace.WriteLine(string.Format("set 25Dcur (Contact) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dcur (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
+            }
+            if (_use25DCursor == 4)
+            {
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, (tuioCursor.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+
+                Trace.WriteLine(string.Format("set 25Dcur (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} sp:{6} acc:{7}", (tuioCursor.Z > _hoverThreshold) ? "Hover" : "Contact", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
             }
         }
 
         public void removeTuioCursor25D(TuioCursor25D tuioCursor)
         {
-            if (_use25DCursor == 2 || _use25DCursor == 3)
+            if (_use25DCursor == 2 || _use25DCursor == 3 || _use25DCursor == 4)
             {
                 if (RemoveTouch(tuioCursor.CursorID))
-                    Trace.WriteLine(string.Format("del 25Dcur {0} ({1})", tuioCursor.CursorID, tuioCursor.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 25Dcur id:{0} (sid:{1})", tuioCursor.CursorID, tuioCursor.SessionID), "TUIO");
             }
         }
 
         public void addTuioObject25D(TuioObject25D tuioObject)
         {
+            int angle = (int)(180.0f * tuioObject.Angle / 3.14159f);
             if (_use25DObject == 2)
             {
-                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false);
-                Trace.WriteLine(string.Format("add 25Dobj (Hover) {0} ({1}) {2} {3}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y), "TUIO");
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 25Dobj (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle), "TUIO");
 
             }
             if (_use25DObject == 3)
             {
-                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true);
-                Trace.WriteLine(string.Format("add 25Dobj (Contact) {0} ({1}) {2} {3}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y), "TUIO");
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 25Dobj (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle), "TUIO");
+
+            }
+            if (_use25DObject == 4)
+            {
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, (tuioObject.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 25Dobj (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} a:{6}", (tuioObject.Z > _hoverThreshold) ? "Hover" : "Contact", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle), "TUIO");
 
             }
         }
 
         public void updateTuioObject25D(TuioObject25D tuioObject)
         {
+            int angle = (int)(180.0f * tuioObject.Angle / 3.14159f);
             if (_use25DObject == 1)
             {
                 int x = (int)((tuioObject.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
@@ -736,52 +828,67 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioObject.Z);
 
-                Trace.WriteLine(string.Format("set 25Dobj (Click) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dobj (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
             if (_use25DObject == 2)
             {
-                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false);
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
 
-                Trace.WriteLine(string.Format("set 25Dobj (Hover) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dobj (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5} sp:{6} acc:{7}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
             if (_use25DObject == 3)
             {
-                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true);
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
 
-                Trace.WriteLine(string.Format("set 25Dobj (Contact) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dobj (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5} sp:{6} acc:{7}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+
+            }
+            if (_use25DObject == 4)
+            {
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, (tuioObject.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+
+                Trace.WriteLine(string.Format("set 25Dobj (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} a:{6} sp:{7} acc:{8}", (tuioObject.Z > _hoverThreshold) ? "Hover" : "Contact", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
         }
 
         public void removeTuioObject25D(TuioObject25D tuioObject)
         {
-            if (_use25DObject == 2 || _use25DObject == 3)
+            if (_use25DObject == 2 || _use25DObject == 3 || _use25DObject == 4)
             {
                 if (RemoveTouch(tuioObject.SymbolID))
-                    Trace.WriteLine(string.Format("del 25Dobj {0} ({1})", tuioObject.SymbolID, tuioObject.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 25Dobj id:{0} (sid:{1})", tuioObject.SymbolID, tuioObject.SessionID), "TUIO");
             }
         }
 
         public void addTuioBlob25D(TuioBlob25D tuioBlob)
         {
+            int angle = (int)(180.0f * tuioBlob.Angle / 3.14159f);
             if (_use25DBlob == 2)
             {
-                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false);
-                Trace.WriteLine(string.Format("add 25Dblb (Hover) {0} ({1}) {2} {3}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y), "TUIO");
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height),angle);
+                Trace.WriteLine(string.Format("add 25Dblb (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5} w:{6} h:{7}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
 
             }
             if (_use25DBlob == 3)
             {
-                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true);
-                Trace.WriteLine(string.Format("add 25Dblb (Contact) {0} ({1}) {2} {3}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y), "TUIO");
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 25Dblb (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5} w:{6} h:{7}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
+
+            }
+            if (_use25DBlob == 4)
+            {
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, (tuioBlob.Z < _hoverThreshold), (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 25Dblb (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5}  a:{6} w:{7} h:{8}", (tuioBlob.Z > _hoverThreshold) ? "Hover" : "Contact", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
 
             }
         }
 
         public void updateTuioBlob25D(TuioBlob25D tuioBlob)
         {
+            int angle = (int)(180.0f * tuioBlob.Angle / 3.14159f);
             if (_use25DBlob == 1)
             {
                 int x = (int)((tuioBlob.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
@@ -789,31 +896,38 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioBlob.Z);
 
-                Trace.WriteLine(string.Format("set 25Dblb (Click) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dblb (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
             if (_use25DBlob == 2)
             {
-                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false);
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
 
-                Trace.WriteLine(string.Format("set 25Dblb (Hover) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dblb (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5} w:{6} h:{7} sp:{8} acc:{9}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
             if (_use25DBlob == 3)
             {
-                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true);
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
 
-                Trace.WriteLine(string.Format("set 25Dblb (Contact) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 25Dblb (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} a:{5} w:{6} h:{7} sp:{8} acc:{9}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+
+            }
+            if (_use25DBlob == 4)
+            {
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, (tuioBlob.Z < _hoverThreshold), (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+
+                Trace.WriteLine(string.Format("set 25Dblb (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} a:{6} w:{7} h:{8} sp:{9} acc:{10}", (tuioBlob.Z > _hoverThreshold) ? "Hover" : "Contact", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
         }
 
         public void removeTuioBlob25D(TuioBlob25D tuioBlob)
         {
-            if (_use25DBlob == 2 || _use25DBlob == 3)
+            if (_use25DBlob == 2 || _use25DBlob == 3 || _use25DBlob == 4)
             {
                 if (RemoveTouch(tuioBlob.BlobID))
-                    Trace.WriteLine(string.Format("del 25Dblb {0} ({1})", tuioBlob.BlobID, tuioBlob.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 25Dblb id:{0} (sid:{1})", tuioBlob.BlobID, tuioBlob.SessionID), "TUIO");
             }
         }
 
@@ -823,14 +937,20 @@ namespace frog.Windows.TouchProxy.Services
         {
             if (_use3DCursor == 2)
             {
-                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false);
-                Trace.WriteLine(string.Format("add 3Dcur (Hover) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 3Dcur (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
 
             }
             if (_use3DCursor == 3)
             {
-                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true);
-                Trace.WriteLine(string.Format("add 3Dcur (Contact) {0} ({1}) {2} {3}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y), "TUIO");
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 3Dcur (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
+
+            }
+            if (_use3DCursor == 4)
+            {
+                AddTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, (tuioCursor.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+                Trace.WriteLine(string.Format("add 3Dcur (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5}", (tuioCursor.Z > _hoverThreshold) ? "Hover" : "Contact", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z), "TUIO");
 
             }
         }
@@ -844,52 +964,67 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioCursor.Z);
 
-                Trace.WriteLine(string.Format("set 3Dcur (Click) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dcur (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
             if (_use3DCursor == 2)
             {
-                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false);
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
 
-                Trace.WriteLine(string.Format("set 3Dcur (Hover) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dcur (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
             if (_use3DCursor == 3)
             {
-                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true);
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
 
-                Trace.WriteLine(string.Format("set 3Dcur (Contact) {0} ({1}) {2} {3} {4} {5}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dcur (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
+
+            }
+            if (_use3DCursor == 4)
+            {
+                UpdateTouch(tuioCursor.CursorID, tuioCursor.X, tuioCursor.Y, (tuioCursor.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, TOUCH_ORIENTATION);
+
+                Trace.WriteLine(string.Format("set 3Dcur (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} sp:{6} acc:{7}", (tuioCursor.Z > _hoverThreshold) ? "Hover" : "Contact", tuioCursor.CursorID, tuioCursor.SessionID, tuioCursor.X, tuioCursor.Y, tuioCursor.Z, tuioCursor.MotionSpeed, tuioCursor.MotionAccel), "TUIO");
 
             }
         }
 
         public void removeTuioCursor3D(TuioCursor3D tuioCursor)
         {
-            if (_use3DCursor == 2 || _use3DCursor == 3)
+            if (_use3DCursor == 2 || _use3DCursor == 3 || _use3DCursor == 4)
             {
                 if (RemoveTouch(tuioCursor.CursorID))
-                    Trace.WriteLine(string.Format("del 3Dcur {0} ({1})", tuioCursor.CursorID, tuioCursor.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 3Dcur id:{0} (sid:{1})", tuioCursor.CursorID, tuioCursor.SessionID), "TUIO");
             }
         }
 
         public void addTuioObject3D(TuioObject3D tuioObject)
         {
+            int angle = (int)(180.0f * tuioObject.Roll / 3.14159f);
             if (_use3DObject == 2)
             {
-                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false);
-                Trace.WriteLine(string.Format("add 3Dobj (Hover) {0} ({1}) {2} {3}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y), "TUIO");
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 3Dobj (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle), "TUIO");
 
             }
             if (_use3DObject == 3)
             {
-                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true);
-                Trace.WriteLine(string.Format("add 3Dobj (Contact) {0} ({1}) {2} {3}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y), "TUIO");
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 3Dobj (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle), "TUIO");
+
+            }
+            if (_use3DObject == 4)
+            {
+                AddTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, (tuioObject.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+                Trace.WriteLine(string.Format("add 3Dobj (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} r:{6}", (tuioObject.Z > _hoverThreshold) ? "Hover" : "Contact", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle), "TUIO");
 
             }
         }
 
         public void updateTuioObject3D(TuioObject3D tuioObject)
         {
+            int angle = (int)(180.0f * tuioObject.Roll / 3.14159f);
             if (_use3DObject == 1)
             {
                 int x = (int)((tuioObject.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
@@ -897,52 +1032,67 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioObject.Z);
 
-                Trace.WriteLine(string.Format("set 3Dobj (Click) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dobj (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
             if (_use3DObject == 2)
             {
-                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false);
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, false, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
 
-                Trace.WriteLine(string.Format("set 3Dobj (Hover) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dobj (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5} sp:{6} acc:{7}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
             if (_use3DObject == 3)
             {
-                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true);
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, true, 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
 
-                Trace.WriteLine(string.Format("set 3Dobj (Contact) {0} ({1}) {2} {3} {4} {5}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dobj (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5} sp:{6} acc:{7}", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
+
+            }
+            if (_use3DObject == 4)
+            {
+                UpdateTouch(tuioObject.SymbolID, tuioObject.X, tuioObject.Y, (tuioObject.Z < _hoverThreshold), 2 * CONTACT_AREA_RADIUS, 2 * CONTACT_AREA_RADIUS, angle);
+
+                Trace.WriteLine(string.Format("set 3Dobj (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} r:{6} sp:{7} acc:{8}", (tuioObject.Z > _hoverThreshold) ? "Hover" : "Contact", tuioObject.SymbolID, tuioObject.SessionID, tuioObject.X, tuioObject.Y, tuioObject.Z, angle, tuioObject.MotionSpeed, tuioObject.MotionAccel), "TUIO");
 
             }
         }
 
         public void removeTuioObject3D(TuioObject3D tuioObject)
         {
-            if (_use3DObject == 2 || _use3DObject == 3)
+            if (_use3DObject == 2 || _use3DObject == 3 || _use3DObject == 4)
             {
                 if (RemoveTouch(tuioObject.SymbolID))
-                    Trace.WriteLine(string.Format("del 3Dobj {0} ({1})", tuioObject.SymbolID, tuioObject.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 3Dobj id:{0} (sid:{1})", tuioObject.SymbolID, tuioObject.SessionID), "TUIO");
             }
         }
 
         public void addTuioBlob3D(TuioBlob3D tuioBlob)
         {
+            int angle = (int)(180.0f * tuioBlob.Roll / 3.14159f);
             if (_use3DBlob == 2)
             {
-                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false);
-                Trace.WriteLine(string.Format("add 3Dblb (Hover) {0} ({1}) {2} {3}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y), "TUIO");
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 3Dblb (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5} w:{6} h:{7}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
 
             }
             if (_use3DBlob == 3)
             {
-                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true);
-                Trace.WriteLine(string.Format("add 3Dblb (Contact) {0} ({1}) {2} {3}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y), "TUIO");
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 3Dblb (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5} w:{6} h:{7}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
+
+            }
+            if (_use3DBlob == 4)
+            {
+                AddTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, (tuioBlob.Z < _hoverThreshold), (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+                Trace.WriteLine(string.Format("add 3Dblb (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} r:{6} w:{7} h:{8}", (tuioBlob.Z > _hoverThreshold) ? "Hover" : "Contact", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height), "TUIO");
 
             }
         }
 
         public void updateTuioBlob3D(TuioBlob3D tuioBlob)
         {
+            int angle = (int)(180.0f * tuioBlob.Roll / 3.14159f);
             if (_use3DBlob == 1)
             {
                 int x = (int)((tuioBlob.X * (_screenRect.Width + _calibrationBuffer.Width)) + _calibrationBuffer.Left + _screenRect.Left);
@@ -950,31 +1100,38 @@ namespace frog.Windows.TouchProxy.Services
 
                 ControlMouseRightButton(x, y, tuioBlob.Z);
 
-                Trace.WriteLine(string.Format("set 3Dblb (Click) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dblb (Click) id:{0} (sid:{1}) x:{2} y:{3} z:{4} sp:{5} acc:{6}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
             if (_use3DBlob == 2)
             {
-                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false);
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, false, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
 
-                Trace.WriteLine(string.Format("set 3Dblb (Hover) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dblb (Hover) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5} w:{6} h:{7} sp:{8} acc:{9}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
             if (_use3DBlob == 3)
             {
-                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y,true);
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y,true, (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
 
-                Trace.WriteLine(string.Format("set 3Dblb (Contact) {0} ({1}) {2} {3} {4} {5}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+                Trace.WriteLine(string.Format("set 3Dblb (Contact) id:{0} (sid:{1}) x:{2} y:{3} z:{4} r:{5} w:{6} h:{7} sp:{8} acc:{9}", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
+
+            }
+            if (_use3DBlob == 4)
+            {
+                UpdateTouch(tuioBlob.BlobID, tuioBlob.X, tuioBlob.Y, (tuioBlob.Z < _hoverThreshold), (int)(ScreenRect.Width * tuioBlob.Width), (int)(ScreenRect.Height * tuioBlob.Height), angle);
+
+                Trace.WriteLine(string.Format("set 3Dblb (Auto(state:{0})) id:{1} (sid:{2}) x:{3} y:{4} z:{5} r:{6} w:{7} h:{8} sp:{9} acc:{10}", (tuioBlob.Z > _hoverThreshold) ? "Hover" : "Contact", tuioBlob.BlobID, tuioBlob.SessionID, tuioBlob.X, tuioBlob.Y, tuioBlob.Z, angle, tuioBlob.Width, tuioBlob.Height, tuioBlob.MotionSpeed, tuioBlob.MotionAccel), "TUIO");
 
             }
         }
 
         public void removeTuioBlob3D(TuioBlob3D tuioBlob)
         {
-            if (_use3DBlob == 2 || _use3DBlob == 3)
+            if (_use3DBlob == 2 || _use3DBlob == 3 || _use3DBlob == 4)
             {
                 if (RemoveTouch(tuioBlob.BlobID))
-                    Trace.WriteLine(string.Format("del 3Dblb {0} ({1})", tuioBlob.BlobID, tuioBlob.SessionID), "TUIO");
+                    Trace.WriteLine(string.Format("del 3Dblb id:{0} (sid:{1})", tuioBlob.BlobID, tuioBlob.SessionID), "TUIO");
             }
         }
 
